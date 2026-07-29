@@ -1,0 +1,1906 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0a1208">
+<title>Finkü — v16</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --verde:#1a3a2a; --verdebg:#0f1f17; --verdedark:#0a1208;
+  --amarillo:#f5c518; --amarilloclaro:#ffd84d; color-scheme: dark;
+  --azul:#52c4ff; --rojo:#f87171; --morado:#a78bfa; --verdeclaro:#4ade80;
+  --naranja:#fb923c;
+  --card:#162212; --border:#2a3a2a; --muted:#d8ead8;
+}
+body { background:var(--verdedark); display:flex; justify-content:center; font-family:Arial,sans-serif; padding:20px; min-height:100vh; }
+.phone { visibility:hidden; }
+.phone { width:390px; background:var(--verdebg); border-radius:48px; border:2px solid #2a3a2a; box-shadow:0 40px 100px rgba(0,0,0,0.9); overflow:hidden; display:flex; flex-direction:column; min-height:844px; position:relative; }
+.notch { position:absolute; top:0; left:50%; transform:translateX(-50%); width:120px; height:28px; background:var(--verdebg); border-radius:0 0 18px 18px; z-index:20; }
+@media (min-width:480px) and (max-width:1024px) {
+  body { padding:0; align-items:flex-start; background:var(--verdedark); }
+  .phone { width:100%; max-width:600px; border-radius:24px; height:auto; min-height:100vh; margin:20px auto; }
+  .notch { display:none; }
+}
+@media (min-width:1025px) {
+  body { padding:0; align-items:stretch; background:var(--verdedark); }
+  .phone { width:100%; max-width:100%; border-radius:0; border:none; box-shadow:none; height:auto; min-height:100vh; margin:0; }
+  .notch { display:none; }
+  .screen.active { max-width:800px; margin:0 auto; width:100%; }
+  .scenario-body, .colegio-body { max-width:760px; margin:0 auto; }
+  #p-splash { position:fixed !important; top:0; left:0; width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; }
+  .splash-content { align-items:center; }
+}
+.screen { display:none; flex-direction:column; flex:1; }
+.screen.active { display:flex; animation:fadeUp 0.4s ease; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+.saldo-bar {
+  position:sticky; top:0; z-index:15;
+  background:linear-gradient(135deg,#0d1f10,#162212);
+  border-bottom:1px solid rgba(245,197,24,0.25);
+  padding:7px 18px;
+  display:flex; align-items:center; justify-content:space-between;
+  flex-shrink:0;
+}
+.saldo-label { font-size:9px; color:#cce0cc; text-transform:uppercase; letter-spacing:1px; font-weight:700; }
+.saldo-amount {
+  font-family:'Arial Black',Impact,sans-serif;
+  font-size:20px; font-weight:900;
+  color:var(--amarillo);
+  transition:color 0.5s, transform 0.3s;
+}
+.saldo-amount.sube { color:var(--verdeclaro); transform:scale(1.15); }
+.saldo-amount.baja { color:var(--rojo); transform:scale(1.15); }
+.saldo-delta {
+  font-size:11px; font-weight:800;
+  opacity:0; transition:opacity 0.3s;
+  padding:2px 8px; border-radius:20px;
+}
+.saldo-delta.show { opacity:1; }
+.saldo-delta.pos { background:rgba(74,222,128,0.15); color:var(--verdeclaro); }
+.saldo-delta.neg { background:rgba(248,113,113,0.15); color:var(--rojo); }
+
+.saldo-context { font-size:12px; font-weight:700; letter-spacing:0.5px; text-transform:uppercase; margin-top:1px; text-align:right; }
+.saldo-context.ahorro { color:var(--verdeclaro); }
+.saldo-context.deuda { color:var(--rojo); }
+
+
+#p-splash {
+  position:fixed !important;
+  top:0; left:0; width:100vw; height:100vh;
+  background:#0a1208;
+  justify-content:center; align-items:center; text-align:center;
+  z-index:9999;
+  border-radius:0 !important;
+}
+.splash-content {
+  display:flex; flex-direction:column; align-items:center; gap:20px;
+  animation: splashFadeIn 1.2s ease forwards, splashFadeOut 0.8s ease 2.6s forwards;
+  opacity:0;
+}
+@keyframes splashFadeIn { 0%{opacity:0;transform:scale(0.92)} 100%{opacity:1;transform:scale(1)} }
+@keyframes splashFadeOut { 0%{opacity:1;transform:scale(1)} 100%{opacity:0;transform:scale(1.04)} }
+.splash-logo-icon {
+  width:100px; height:100px;
+  background:#f5c518 !important;
+  border-radius:24px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Arial Black',Impact,sans-serif; font-size:42px; font-weight:900;
+  color:#1a3a1a !important;
+  box-shadow:0 0 60px rgba(245,197,24,0.5), 0 0 120px rgba(245,197,24,0.15);
+}
+.splash-logo-name {
+  font-family:'Arial Black',Impact,sans-serif;
+  font-size:60px; font-weight:900;
+  color:var(--amarillo);
+  letter-spacing:-2px; line-height:1;
+  text-shadow: 0 0 40px rgba(245,197,24,0.3);
+}
+
+#p-colegio { background:linear-gradient(180deg,#0a1f10,var(--verdebg)); }
+
+/* PRE-TEST */
+#p-pretest { background:linear-gradient(180deg,#0a1f10,var(--verdebg)); min-height:0; }
+.pretest-hero { background:var(--verde); padding:40px 24px 20px; text-align:center; border-bottom:1px solid #2a3a2a; }
+.pretest-titulo { font-family:'Arial Black',Impact,sans-serif; font-size:20px; color:#fff; line-height:1.3; margin-bottom:6px; }
+.pretest-sub { font-size:11px; color:#cce0cc; line-height:1.6; }
+.pretest-body { padding:20px 20px 40px; flex:1; }
+.pretest-scroll { display:contents; }
+.pretest-progress { background:#1a2e1a; border-radius:8px; height:6px; margin-bottom:6px; overflow:hidden; }
+.pretest-progress-bar { height:100%; background:var(--amarillo); border-radius:8px; transition:width 0.4s ease; }
+.pretest-counter { font-size:9px; color:#90b890; text-transform:uppercase; letter-spacing:1px; font-weight:700; margin-bottom:16px; }
+.pretest-tema { display:inline-block; background:rgba(245,197,24,0.12); border:1px solid rgba(245,197,24,0.3); border-radius:20px; padding:3px 12px; font-size:10px; color:var(--amarillo); font-weight:700; margin-bottom:12px; }
+.pretest-pregunta { font-size:15px; color:#fff; font-weight:700; line-height:1.5; margin-bottom:20px; }
+.pretest-opciones { display:flex; flex-direction:column; gap:10px; }
+.pretest-opcion {
+  background:var(--card); border:1.5px solid var(--border); border-radius:12px;
+  padding:14px 16px; color:#cce0cc; font-size:13px; cursor:pointer;
+  transition:all 0.2s; text-align:left; font-family:Arial,sans-serif;
+}
+.pretest-opcion:hover { border-color:var(--amarillo); color:#fff; }
+.pretest-opcion.correcta { border-color:#4ade80; background:rgba(74,222,128,0.1); color:#4ade80; pointer-events:none; }
+.pretest-opcion.incorrecta { border-color:var(--rojo); background:rgba(248,113,113,0.1); color:var(--rojo); pointer-events:none; }
+.pretest-opcion.disabled { pointer-events:none; opacity:0.5; }
+.pretest-feedback { margin-top:14px; padding:12px 14px; border-radius:10px; font-size:12px; line-height:1.5; display:none; }
+.pretest-feedback.show { display:block; }
+.pretest-feedback.ok { background:rgba(74,222,128,0.1); border:1px solid rgba(74,222,128,0.3); color:#4ade80; }
+.pretest-feedback.mal { background:rgba(248,113,113,0.1); border:1px solid rgba(248,113,113,0.3); color:#f87171; }
+.pretest-siguiente { margin-top:16px; width:100%; display:none; }
+.pretest-siguiente.show { display:block; }
+.pretest-resultado { text-align:center; padding:32px 20px; }
+.pretest-siguiente { margin-top:16px; width:100%; }
+.pretest-score-num { font-family:'Arial Black',Impact,sans-serif; font-size:64px; color:var(--amarillo); font-weight:900; line-height:1; }
+.pretest-score-label { font-size:12px; color:#90b890; text-transform:uppercase; letter-spacing:1px; margin-top:4px; margin-bottom:24px; }
+.pretest-score-msg { font-size:14px; color:#cce0cc; line-height:1.6; margin-bottom:28px; }
+.colegio-hero { background:var(--verde); padding:52px 24px 24px; text-align:center; border-bottom:1px solid #2a3a2a; }
+.colegio-titulo { font-family:'Arial Black',Impact,sans-serif; font-size:22px; color:#fff; line-height:1.3; margin-bottom:8px; }
+.colegio-sub { font-size:12px; color:#cce0cc; line-height:1.7; }
+.colegio-body { padding:24px 20px 32px; flex:1; }
+.colegio-label { font-size:9px; color:#90b890; text-transform:uppercase; letter-spacing:1px; font-weight:700; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+.colegio-label::after { content:''; flex:1; height:1px; background:#2a3a2a; }
+.colegio-select {
+  width:100%; background:var(--card); border:1.5px solid var(--border);
+  border-radius:12px; padding:14px 16px; color:#fff; font-size:14px;
+  font-family:Arial,sans-serif; outline:none; cursor:pointer;
+  transition:border-color 0.2s; appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23f5c518' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 14px center;
+  background-color:var(--card);
+}
+.colegio-select:focus { border-color:var(--amarillo); }
+.colegio-select option { background:#162212; color:#fff; }
+.colegio-info {
+  background:rgba(245,197,24,0.06); border:1px solid rgba(245,197,24,0.15);
+  border-radius:10px; padding:12px 14px; margin-top:14px; margin-bottom:20px;
+  font-size:11px; color:#d8ead8; line-height:1.7; display:none;
+}
+.colegio-info.visible { display:block; animation:fadeUp 0.3s ease; }
+
+.logo-bar { background:var(--verde); padding:44px 18px 12px; display:flex; align-items:center; gap:10px; border-bottom:1px solid #2a3a2a; flex-shrink:0; }
+.logo-icon { width:42px; height:42px; background:#f5c518 !important; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:17px; color:#1a3a1a !important; font-family:'Arial Black',Impact,sans-serif; flex-shrink:0; }
+.logo-title { font-family:'Arial Black',Impact,sans-serif; font-size:24px; font-weight:900; color:var(--amarillo); letter-spacing:-0.5px; line-height:1; }
+.logo-sub { font-size:9px; color:#cce0cc; letter-spacing:0.5px; margin-top:1px; }
+.nivel-pill { background:rgba(245,197,24,0.15); border:1px solid rgba(245,197,24,0.3); border-radius:12px; padding:4px 10px; font-size:10px; font-weight:700; color:var(--amarillo); letter-spacing:0.5px; margin-left:auto; }
+
+.prog-wrap { height:4px; background:rgba(0,0,0,0.3); flex-shrink:0; }
+.prog-fill { height:100%; background:linear-gradient(90deg,var(--amarillo),var(--amarilloclaro)); transition:width 0.6s ease; box-shadow:0 0 8px rgba(245,197,24,0.5); }
+
+.avatar-wrap { background:var(--verde); padding:12px 16px 10px; display:flex; align-items:center; gap:12px; flex-shrink:0; }
+.avatar-info { flex:1; }
+.avatar-name { font-size:13px; font-weight:800; color:#fff; }
+.avatar-sub { font-size:10px; color:#cce0cc; margin-top:1px; }
+.xp-badge { background:rgba(245,197,24,0.15); border:1px solid rgba(245,197,24,0.3); border-radius:8px; padding:5px 10px; font-size:12px; color:var(--amarillo); font-weight:800; }
+
+/* ===== VISUAL NOVEL ===== */
+#p-escenario { padding:0; overflow:hidden; flex-direction:column; }
+.vn-stage { position:relative; flex:1; display:flex; flex-direction:column; overflow:hidden; min-height:0; }
+.vn-bg { position:absolute; inset:0; transition:background 0.6s ease; z-index:0; background-size:cover; background-position:center top; background-repeat:no-repeat; }
+.vn-bg.phase-1 { background-image:url('images/img_000.jpg'); }
+.vn-bg.phase-2 { background-image:url('images/img_001.webp'); background-size:cover; background-position:center top; }
+.vn-bg.phase-cancun { background-image:url('images/img_002.webp'); background-size:cover; background-position:center top; }
+.vn-bg.phase-mall { background-image:url('images/img_003.webp'); background-size:cover; background-position:center top; }
+.vn-bg.phase-mama { background-image:url('images/img_004.webp'); background-size:cover; background-position:center top; }
+.vn-bg.phase-trabajo { background-image:url('images/img_005.webp'); background-size:cover; background-position:center top; }
+.vn-bg.phase-carro { background-image:url('images/img_006.webp'); background-size:cover; background-position:center top; }
+.vn-bg.phase-trafico { background-image:url('images/img_007.webp'); background-size:cover; background-position:center top; }
+.vn-bg.phase-ted { background-image:url('images/img_008.webp'); background-size:cover; background-position:center top; }
+.vn-bg.phase-3 { background:linear-gradient(180deg,#050510 0%,#0d0d20 40%,#151530 100%); }
+@media (orientation:landscape) {
+  .vn-bg.phase-1 { background-image:url('images/img_009.jpg'); background-position:center center; }
+}
+.vn-bg::after { content:''; position:absolute; inset:0; background:linear-gradient(180deg,transparent 55%,rgba(0,0,0,0.6) 100%); }
+.vn-char-wrap { position:relative; z-index:2; flex:1; display:flex; align-items:flex-end; justify-content:center; min-height:0; overflow:hidden; }
+.vn-char { display:none; }
+.vn-char.expr-happy { } .vn-char.expr-worried { }
+.vn-dialog-box { position:absolute; bottom:0; left:0; right:0; z-index:3; background:rgba(5,10,5,0.92); border-top:2px solid rgba(245,197,24,0.4); padding:14px 18px 10px; flex-shrink:0; }
+.vn-dialog-box::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,rgba(245,197,24,0.6),transparent); }
+.vn-speaker { font-size:17px; font-weight:800; color:var(--amarillo); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:6px; }
+.vn-text { font-size:20px; color:#e8e0d0; line-height:1.7; min-height:40px; }
+.vn-cursor { display:inline-block; width:8px; height:13px; background:var(--amarillo); margin-left:2px; animation:blink 0.8s step-end infinite; vertical-align:middle; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+.vn-tap-hint { font-size:15px; color:rgba(245,197,24,1.0); text-align:right; margin-top:4px; animation:pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+.vn-options-panel { position:relative; z-index:3; background:rgba(5,10,5,0.95); border-top:1px solid rgba(255,255,255,0.07); padding:10px 14px 14px; flex-shrink:0; max-height:55vh; overflow-y:auto; }
+.vn-badge { display:inline-flex; align-items:center; gap:5px; background:rgba(245,197,24,0.08); border:1px solid rgba(245,197,24,0.2); border-radius:20px; padding:3px 10px; font-size:15px; color:var(--amarillo); font-weight:700; margin-bottom:8px; }
+.vn-question { font-size:21px; font-weight:800; color:#fff; margin-bottom:10px; line-height:1.4; }
+.scenario-body { flex:1; padding:12px 18px 24px; overflow-y:auto; }
+.scenario-badge { display:inline-flex; align-items:center; gap:5px; background:rgba(245,197,24,0.08); border:1px solid rgba(245,197,24,0.2); border-radius:20px; padding:4px 12px; font-size:11px; color:var(--amarillo); font-weight:700; margin-bottom:10px; }
+.scenario-title { font-family:'Arial Black',Impact,sans-serif; font-size:20px; color:#fff; line-height:1.2; margin-bottom:8px; }
+.scenario-desc { font-size:12px; color:var(--muted); line-height:1.7; margin-bottom:12px; }
+.dato-bomba { background:rgba(245,197,24,0.06); border:1px solid rgba(245,197,24,0.2); border-radius:10px; padding:10px 12px; margin-bottom:14px; display:flex; gap:8px; align-items:flex-start; }
+.dato-icon { font-size:24px; flex-shrink:0; }
+.dato-text { font-size:17px; color:var(--amarillo); line-height:1.6; font-weight:600; }
+.options-label { font-size:10px; color:#90b890; text-transform:uppercase; letter-spacing:1.5px; font-weight:700; margin-bottom:8px; }
+
+.option { background:var(--card); border:1.5px solid var(--border); border-radius:14px; padding:13px; margin-bottom:8px; cursor:pointer; transition:all 0.25s; position:relative; overflow:hidden; }
+.option::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(245,197,24,0.08),transparent); opacity:0; transition:opacity 0.3s; }
+.option:hover { border-color:#90b890; transform:translateY(-1px); box-shadow:0 4px 16px rgba(0,0,0,0.3); }
+.option:hover::before { opacity:1; }
+.option.selected { border-color:var(--amarillo); background:#1e2a10; box-shadow:0 0 20px rgba(245,197,24,0.15); animation:selectPop 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes selectPop { 0%{transform:scale(0.98)} 60%{transform:scale(1.02)} 100%{transform:scale(1)} }
+.option-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:5px; }
+.option-tag { font-size:10px; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:#aaa; }
+.option-check { width:20px; height:20px; border-radius:50%; border:1.5px solid #2a3a2a; display:flex; align-items:center; justify-content:center; font-size:11px; color:#fff; transition:all 0.3s; }
+.selected .option-check { background:#555; border-color:#888; transform:scale(1.2); }
+.option-name { font-size:21px; font-weight:700; color:#fff; margin-bottom:3px; }
+.option-detail { font-size:17px; color:#cce0cc; line-height:1.5; }
+
+.btn-primary { margin-top:14px; background:linear-gradient(135deg,var(--amarillo),var(--amarilloclaro)); border:none; border-radius:14px; padding:16px; width:100%; font-family:'Arial Black',Impact,sans-serif; font-size:16px; font-weight:900; color:var(--verde); cursor:pointer; box-shadow:0 8px 24px rgba(245,197,24,0.25); transition:all 0.2s; display:none; }
+.btn-primary.visible { display:block; animation:fadeUp 0.3s ease; }
+.btn-primary:hover { transform:translateY(-2px); box-shadow:0 12px 32px rgba(245,197,24,0.4); }
+.btn-primary:active { transform:scale(0.98); }
+
+#particles { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:999; }
+#toast { position:fixed; top:80px; left:50%; transform:translateX(-50%); background:rgba(26,58,42,0.95); border:1px solid var(--amarillo); border-radius:20px; padding:10px 20px; font-size:13px; font-weight:700; color:var(--amarillo); z-index:1000; opacity:0; transition:opacity 0.3s; pointer-events:none; white-space:nowrap; }
+#toast.show { opacity:1; }
+
+#p-inicio { background:linear-gradient(180deg,#0a1f10,var(--verdebg)); }
+.inicio-hero { background:var(--verde); padding:20px 24px 16px; text-align:center; }
+.inicio-logo-big { width:80px; height:80px; background:#f5c518; border-radius:20px; display:inline-flex; align-items:center; justify-content:center; font-family:'Arial Black',sans-serif; font-size:32px; font-weight:900; color:#1a3a1a; margin-bottom:12px; box-shadow:0 0 40px rgba(245,197,24,0.3); }
+.inicio-logo-name { font-family:'Arial Black',Impact,sans-serif; font-size:36px; color:var(--amarillo); font-weight:900; letter-spacing:-1px; margin-bottom:4px; }
+.inicio-tagline { font-size:10px; color:#cce0cc; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:16px; }
+.inicio-claim { font-size:22px; font-weight:900; color:#fff; line-height:1.3; margin-bottom:10px; }
+.inicio-desc { font-size:12px; color:var(--muted); line-height:1.7; }
+.config-wrap { padding:20px 20px 32px; flex:1; }
+.sec-label { font-size:9px; color:#90b890; text-transform:uppercase; letter-spacing:1px; font-weight:700; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+.sec-label::after { content:''; flex:1; height:1px; background:#2a3a2a; }
+.preview-wrap { text-align:center; margin-bottom:14px; }
+.sel-row { display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
+.sel-btn { flex:1; min-width:80px; background:var(--card); border:1.5px solid var(--border); border-radius:10px; padding:8px 6px; text-align:center; font-size:11px; font-weight:700; color:#cce0cc; cursor:pointer; transition:all 0.2s; }
+.sel-btn .ico { display:block; font-size:18px; margin-bottom:2px; }
+.sel-btn.on { border-color:var(--amarillo); background:rgba(245,197,24,0.08); color:var(--amarillo); }
+.cfg-input { width:100%; background:var(--card); border:1.5px solid var(--border); border-radius:10px; padding:12px; color:#fff; font-size:14px; outline:none; margin-bottom:8px; }
+select.cfg-input { cursor:pointer; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23f5c518' stroke-width='2' fill='none'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:32px; }
+select.cfg-input option { background:#162212; color:#fff; }
+.cfg-input:focus { border-color:var(--amarillo); }
+.cfg-row { display:flex; gap:8px; }
+
+/* TRANSICION */
+.teaching-card {
+  background: linear-gradient(135deg, rgba(245,197,24,0.08) 0%, rgba(245,197,24,0.03) 100%);
+  border: 1px solid rgba(245,197,24,0.35);
+  border-left: 4px solid #f5c518;
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  display: none;
+}
+.teaching-label {
+  font-size: 10px; font-weight: 800; color: #f5c518;
+  text-transform: uppercase; letter-spacing: 1.5px;
+  margin-bottom: 6px;
+}
+.teaching-text {
+  font-size: 13px; color: #e0e0e0; line-height: 1.6;
+}
+.trans-wrap { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:32px 24px; text-align:center; }
+.trans-icon { font-size:52px; margin-bottom:16px; }
+.trans-titulo { font-family:'Arial Black',Impact,sans-serif; font-size:22px; color:#fff; margin-bottom:8px; }
+.trans-desc { font-size:13px; color:var(--muted); line-height:1.7; margin-bottom:20px; max-width:340px; }
+.badge-earned { display:flex; align-items:center; gap:10px; background:rgba(245,197,24,0.1); border:1px solid rgba(245,197,24,0.3); border-radius:14px; padding:12px 16px; margin-bottom:20px; animation:badgePop 0.5s; }
+.be-icon { font-size:28px; }
+.be-text { text-align:left; }
+.be-title { font-size:13px; font-weight:800; color:var(--amarillo); }
+.be-sub { font-size:10px; color:#cce0cc; margin-top:2px; }
+.saldo-trans { background:linear-gradient(135deg,rgba(245,197,24,0.1),rgba(245,197,24,0.03)); border:1px solid rgba(245,197,24,0.3); border-radius:14px; padding:14px 20px; margin-bottom:16px; text-align:center; }
+.saldo-trans-label { font-size:9px; color:#cce0cc; text-transform:uppercase; letter-spacing:1px; font-weight:700; margin-bottom:4px; }
+.saldo-trans-amount { font-family:'Arial Black',Impact,sans-serif; font-size:28px; color:var(--amarillo); font-weight:900; }
+.impacto-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; margin-bottom:16px; text-align:center; }
+.imp-label { font-size:9px; color:#90b890; text-transform:uppercase; letter-spacing:1px; font-weight:700; margin-bottom:6px; }
+.imp-val { font-size:14px; font-weight:800; color:#fff; }
+.imp-sub { font-size:11px; color:var(--muted); margin-top:3px; }
+@keyframes badgePop { from{transform:scale(0.5);opacity:0} to{transform:scale(1);opacity:1} }
+
+/* MENTOR */
+.mentor-wrap { display:flex; flex-direction:column; align-items:center; padding:20px 20px 28px; gap:14px; }
+.mentor-student-badge { display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:50px; padding:8px 16px 8px 10px; width:100%; }
+.mentor-student-icon { font-size:22px; }
+.mentor-student-name { font-size:15px; font-weight:900; color:#fff; line-height:1.2; }
+.mentor-student-title { font-size:10px; font-weight:700; color:var(--amarillo); text-transform:uppercase; letter-spacing:1px; }
+.mentor-banker-wrap { display:flex; align-items:center; gap:12px; background:linear-gradient(135deg,rgba(26,42,74,0.6),rgba(26,42,74,0.2)); border:1px solid rgba(100,140,220,0.3); border-radius:16px; padding:12px 16px; width:100%; }
+.mentor-banker-ring { width:88px; height:88px; border-radius:50%; border:3px solid var(--amarillo); background:#0d1f0d; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0; box-shadow:0 4px 20px rgba(245,197,24,0.3); }
+.mentor-banker-info { flex:1; }
+.mentor-banker-name { font-size:14px; font-weight:900; color:#fff; margin-bottom:2px; }
+.mentor-banker-role { font-size:10px; color:#8ab0e0; line-height:1.4; }
+.mentor-card { background:linear-gradient(135deg,rgba(245,197,24,0.08),rgba(245,197,24,0.02)); border:1px solid rgba(245,197,24,0.3); border-radius:16px; padding:16px; width:100%; }
+.mentor-greeting { font-size:13px; font-weight:800; color:var(--amarillo); margin-bottom:8px; }
+.mentor-texto { font-size:13px; color:#f0e8c0; line-height:1.8; }
+.mentor-texto b { color:#f5c518; font-weight:700; }
+.btn-mentor-continuar { background:var(--amarillo); color:#000; font-size:14px; font-weight:800; border:none; border-radius:50px; padding:14px 32px; cursor:pointer; letter-spacing:0.5px; transition:transform 0.15s, box-shadow 0.15s; box-shadow:0 4px 20px rgba(245,197,24,0.4); width:100%; }
+.btn-mentor-continuar:hover { transform:translateY(-2px); box-shadow:0 6px 24px rgba(245,197,24,0.5); }
+
+/* FINAL */
+.final-wrap { flex:1; display:flex; flex-direction:column; align-items:center; padding:20px 20px 28px; text-align:center; overflow-y:auto; }
+.final-emoji { font-size:60px; margin-bottom:10px; }
+.final-title { font-family:'Arial Black',Impact,sans-serif; font-size:22px; color:#fff; margin-bottom:4px; }
+.final-sub { font-size:12px; color:var(--amarillo); margin-bottom:12px; }
+.final-desc { font-size:13px; color:var(--muted); line-height:1.7; margin-bottom:16px; max-width:360px; }
+.final-stats { display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; margin-bottom:16px; }
+.final-stat { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:12px; }
+.final-stat-label { font-size:9px; color:#90b890; text-transform:uppercase; letter-spacing:1px; font-weight:700; margin-bottom:4px; }
+.final-stat-value { font-size:20px; font-weight:900; color:var(--amarillo); }
+
+.feedback-section { width:100%; margin-bottom:16px; text-align:left; }
+.feedback-titulo { font-size:10px; color:#90b890; text-transform:uppercase; letter-spacing:1px; font-weight:700; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
+.feedback-titulo::after { content:''; flex:1; height:1px; background:#2a3a2a; }
+.feedback-modulo { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:12px 14px; margin-bottom:8px; }
+.feedback-modulo-header { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+.feedback-modulo-icon { font-size:16px; }
+.feedback-modulo-label { font-size:10px; font-weight:800; color:#cce0cc; text-transform:uppercase; letter-spacing:0.5px; }
+.feedback-modulo-decision { font-size:11px; font-weight:700; color:var(--amarillo); margin-bottom:5px; }
+.feedback-modulo-leccion { font-size:12px; color:#d8ead8; line-height:1.6; }
+
+.xp-pop { position:fixed; font-size:18px; font-weight:900; color:var(--amarillo); pointer-events:none; z-index:1000; animation:xpFloat 1.2s ease-out forwards; }
+@keyframes xpFloat { 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-80px) scale(1.3)} }
+
+/* BONUS EVENT */
+.bonus-wrap { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:32px 24px; text-align:center; }
+.bonus-icon { font-size:52px; margin-bottom:12px; animation:badgePop 0.6s; }
+.bonus-titulo { font-family:'Arial Black',Impact,sans-serif; font-size:20px; color:var(--verdeclaro); margin-bottom:6px; }
+.bonus-origen { font-size:11px; color:var(--naranja); font-weight:700; margin-bottom:12px; text-transform:uppercase; letter-spacing:1px; }
+.bonus-desc { font-size:13px; color:var(--muted); line-height:1.7; margin-bottom:16px; max-width:340px; }
+.bonus-amount { font-family:'Arial Black',Impact,sans-serif; font-size:32px; color:var(--verdeclaro); font-weight:900; margin-bottom:20px; animation:xpFloat 2s ease-out infinite; }
+@keyframes bonusPulse { 0%{transform:scale(1)} 50%{transform:scale(1.05)} 100%{transform:scale(1)} }
+
+.saldo-pop { position:fixed; font-size:16px; font-weight:900; pointer-events:none; z-index:1000; animation:xpFloat 1.2s ease-out forwards; }
+
+/* ===== INSTRUCCIONES ===== */
+#p-instrucciones {
+  flex-direction:column; flex:1;
+  background:linear-gradient(180deg,#0a1208 0%,#0f1f17 100%);
+  padding:24px 20px 32px; overflow-y:auto; min-height:0;
+}
+#p-instrucciones.active { display:flex; }
+.inst-logo-row {
+  display:flex; align-items:center; gap:10px; margin-bottom:20px;
+}
+.inst-logo-box {
+  width:40px; height:40px; background:#f5c518; border-radius:9px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Arial Black',sans-serif; font-size:17px; font-weight:900; color:#1a3a1a;
+}
+.inst-titulo {
+  font-family:'Arial Black',Impact,sans-serif;
+  font-size:22px; font-weight:900; color:var(--amarillo);
+  margin-bottom:6px;
+}
+.inst-intro {
+  font-size:14px; color:rgba(255,255,255,0.7);
+  line-height:1.6; margin-bottom:22px;
+  border-left:3px solid var(--amarillo);
+  padding-left:12px;
+}
+.inst-card {
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(245,197,24,0.2);
+  border-radius:14px; padding:14px 16px;
+  margin-bottom:12px; display:flex; gap:14px; align-items:flex-start;
+}
+.inst-card-icon { font-size:26px; flex-shrink:0; margin-top:2px; }
+.inst-card-titulo {
+  font-size:15px; font-weight:800; color:#fff; margin-bottom:4px;
+}
+.inst-card-desc {
+  font-size:13px; color:rgba(255,255,255,0.65); line-height:1.5;
+}
+.inst-alerta {
+  background:rgba(248,113,113,0.1);
+  border:1px solid rgba(248,113,113,0.3);
+  border-radius:14px; padding:13px 16px;
+  margin-bottom:22px; display:flex; gap:12px; align-items:flex-start;
+}
+.inst-alerta-txt { font-size:13px; color:#fca5a5; line-height:1.5; }
+
+/* ===== PHASE CINEMATIC ===== */
+#p-fase-cin {
+  position:fixed; top:0; left:0; width:100vw; height:100vh;
+  background:#000;
+  display:none; flex-direction:column;
+  justify-content:center; align-items:center;
+  z-index:9999;
+}
+.fase-cin-logo {
+  font-family:'Arial Black',Impact,sans-serif;
+  font-size:56px; font-weight:900; letter-spacing:2px;
+  color:#f5c518;
+  text-shadow: 0 0 40px rgba(245,197,24,0.8), 0 0 80px rgba(245,197,24,0.4);
+  margin-bottom:10px;
+}
+.fase-cin-nombre {
+  font-family:'Arial Black',Impact,sans-serif;
+  font-size:14px; font-weight:700; letter-spacing:8px;
+  text-transform:uppercase; color:rgba(255,255,255,0.5);
+  margin-bottom:20px;
+}
+.fase-cin-titulo {
+  font-family:'Arial Black',Impact,sans-serif;
+  font-size:32px; font-weight:900;
+  color:#fff; letter-spacing:2px;
+  text-transform:uppercase;
+}
+.fase-cin-sub {
+  font-size:32px; font-weight:900; color:#f5c518;
+  margin-top:6px; letter-spacing:2px;
+  text-transform:uppercase;
+  font-family:'Arial Black',Impact,sans-serif;
+  text-shadow: 0 0 30px rgba(245,197,24,0.6);
+}
+@keyframes cinFadeIn {
+  0%   { opacity:0; transform:scale(0.92); }
+  25%  { opacity:1; transform:scale(1); }
+  75%  { opacity:1; transform:scale(1); }
+  100% { opacity:0; transform:scale(1.04); }
+}
+.fase-cin-content {
+  text-align:center;
+  animation: cinFadeIn 3s ease forwards;
+}
+
+/* ===== MOBILE FIXES ===== */
+@media (max-width: 480px) {
+
+  /* Phone debe llenar exactamente la pantalla, sin espacio muerto */
+  .phone { min-height:100vh !important; height:100vh !important; overflow-y:auto !important; }
+
+  /* FIX 1: HUD compacto */
+  #esc-colegio { font-size:12px !important; max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #esc-xp { font-size:12px !important; }
+  #esc-nivel { font-size:11px !important; padding:2px 7px !important; }
+  #esc-nom, #esc-edad { font-size:11px !important; }
+  #saldo-esc { font-size:13px !important; }
+  .saldo-context { font-size:10px !important; }
+
+  /* FIX 2: vn-stage NO constrañe altura — overflow visible para que options-panel se vea */
+  .vn-stage { 
+    height:auto !important; 
+    max-height:none !important; 
+    min-height:0 !important; 
+    flex:1 !important;
+    overflow:visible !important; 
+    display:flex !important;
+    flex-direction:column !important;
+  }
+
+  /* FIX 2b: Imagen del personaje limitada a 28vh */
+  .vn-char-wrap { 
+    height:28vh !important; 
+    max-height:28vh !important; 
+    min-height:28vh !important; 
+    flex-shrink:0 !important; 
+    overflow:hidden !important; 
+  }
+
+  /* FIX 3: Diálogo visible sobre imagen */
+  .vn-dialog-box {
+    position:absolute !important;
+    bottom:0 !important; left:0 !important; right:0 !important;
+    z-index:10 !important;
+    background:rgba(10,18,8,0.92) !important;
+  }
+
+  /* FIX 4: Panel de opciones con scroll independiente */
+  .vn-options-panel {
+    max-height:calc(100vh - 28vh - 90px) !important;
+    overflow-y:auto !important;
+    flex-shrink:0 !important;
+  }
+
+  /* FIX 5: Escenario permite overflow para ver opciones */
+  #p-escenario { overflow:visible !important; }
+
+  /* Scenario body llena el espacio restante sin dead space */
+  .scenario-body { flex:1 !important; padding:10px 14px 16px !important; overflow-y:auto !important; }
+
+  /* Screen llena el phone */
+  .screen.active { min-height:0 !important; flex:1 !important; }
+
+  /* Opciones más compactas */
+  .option { padding:10px 12px !important; margin-bottom:8px !important; }
+  .option-name { font-size:16px !important; }
+  .option-detail { font-size:13px !important; }
+}
+</style>
+</head>
+<body style="background:#0a1208;">
+<canvas id="particles" style="position:fixed;top:0;left:0;pointer-events:none;z-index:999;"></canvas>
+<div id="toast"></div>
+
+<!-- SPLASH -->
+<div id="p-splash" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#0a1208;display:flex;justify-content:center;align-items:center;z-index:9999;">
+  <div class="splash-content">
+    <div class="splash-logo-icon" style="background:#f5c518;color:#1a3a1a;">Fü</div>
+    <div class="splash-logo-name">Fin<span style="color:#fff">kü</span></div>
+  </div>
+</div>
+
+
+<!-- ===== PHASE CINEMATIC ===== -->
+<div id="p-fase-cin" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;display:none;flex-direction:column;justify-content:center;align-items:center;z-index:9999;">
+  <div class="fase-cin-content">
+    <div class="fase-cin-logo">Fü</div>
+    <div class="fase-cin-nombre" id="cin-fase-nombre">FASE 2</div>
+    <div class="fase-cin-titulo" id="cin-fase-titulo">Bienvenido a</div>
+    <div class="fase-cin-sub" id="cin-fase-sub">La Prueba</div>
+  </div>
+</div>
+<div class="phone">
+<div class="notch"></div>
+
+<!-- COLEGIO -->
+<div id="p-colegio" class="screen">
+  <div class="colegio-hero">
+    <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <div style="width:44px;height:44px;background:#f5c518;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Arial Black',sans-serif;font-size:18px;font-weight:900;color:#1a3a1a;">Fü</div>
+      <div style="font-family:'Arial Black',Impact,sans-serif;font-size:26px;color:var(--amarillo);font-weight:900;">Finkü</div>
+    </div>
+    <div class="colegio-titulo">¡Bienvenido a<br>tu simulador financiero!</div>
+    <div class="colegio-sub">15 decisiones. 3 fases de tu vida.<br>¿Cómo te va financieramente?</div>
+  </div>
+  <div class="colegio-body">
+    <div class="colegio-label">Tu colegio</div>
+    <select class="colegio-select" id="sel-colegio" onchange="onSelectColegio()">
+      <option value="">— Selecciona tu colegio —</option>
+      <option value="Jorge Basadre Grohmann">Jorge Basadre Grohmann</option>
+      <option value="Markham College">Markham College</option>
+    </select>
+    <div class="colegio-info" id="colegio-info"><span id="colegio-info-txt">—</span></div>
+    <button class="btn-primary" id="btn-colegio" onclick="irPretest()" style="display:none;">Antes de jugar: diagnóstico rápido →</button>
+  </div>
+</div>
+
+<!-- INICIO -->
+<!-- PRE-TEST -->
+<div id="p-pretest" class="screen">
+  <div class="pretest-hero">
+    <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:12px;">
+      <div style="width:36px;height:36px;background:#f5c518;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Arial Black',sans-serif;font-size:15px;font-weight:900;color:#1a3a1a;">Fü</div>
+      <div style="font-family:'Arial Black',Impact,sans-serif;font-size:22px;color:var(--amarillo);font-weight:900;">Finkü</div>
+    </div>
+    <div class="pretest-titulo">Diagnóstico financiero</div>
+    <div class="pretest-sub">10 preguntas rápidas antes de jugar.<br>Mide lo que ya sabes.</div>
+    <div style="margin-top:10px;">
+      <button onclick="skipPretest()" style="background:rgba(245,197,24,0.12);border:1px solid rgba(245,197,24,0.5);color:#f5c518;font-size:13px;cursor:pointer;border-radius:20px;padding:7px 18px;margin-top:4px;font-weight:700;">Omitir diagnóstico →</button>
+    </div>
+  </div>
+  <div class="pretest-body" id="pretest-body">
+    <!-- se genera dinámicamente -->
+  </div>
+</div>
+
+<div id="p-inicio" class="screen">
+  <div class="inicio-hero">
+    <div class="inicio-logo-big" style="background:#f5c518;color:#1a3a1a;">Fü</div>
+    <div class="inicio-logo-name">Fin<span style="color:#fff">kü</span></div>
+    <div class="inicio-tagline">Finanzas · Conocimiento · Gamificación</div>
+    <div style="display:inline-block;background:rgba(245,197,24,0.12);border:1px solid rgba(245,197,24,0.3);border-radius:20px;padding:5px 16px;font-size:11px;color:var(--amarillo);font-weight:700;margin-bottom:12px">📍 15 DECISIONES · 3 FASES</div>
+    <div class="inicio-claim">15 decisiones.<br>6 años de tu vida.<br>¿Cómo te va?</div>
+  </div>
+  <div class="config-wrap">
+    <div class="sec-label">Crea tu avatar</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;justify-content:center;">
+      <div style="width:90px;height:90px;border-radius:50%;border:3px solid #f5c518;overflow:hidden;background:#000;position:relative;flex-shrink:0;">
+        <img id="svg-pre" style="position:absolute;width:135%;height:135%;object-fit:cover;object-position:center 22%;top:-3%;left:-17%;" src="">
+      </div>
+      <div class="sel-row" style="display:flex;flex-direction:column;gap:8px;">
+        <div class="sel-btn on" onclick="sg('M',this)" style="width:140px;padding:10px 14px;"><span class="ico">👦</span>Masculino</div>
+        <div class="sel-btn" onclick="sg('F',this)" style="width:140px;padding:10px 14px;"><span class="ico">👧</span>Femenino</div>
+      </div>
+    </div>
+    <input class="cfg-input" id="inp-nom" type="text" placeholder="Tu nombre" maxlength="20" oninput="dp()">
+    <div class="cfg-row">
+      <select class="cfg-input" id="inp-grado">
+        <option value="">Año escolar</option>
+        <option value="3ero Secundaria">3ero Secundaria</option>
+        <option value="4to Secundaria">4to Secundaria</option>
+        <option value="5to Secundaria">5to Secundaria</option>
+      </select>
+      <select class="cfg-input" id="inp-seccion">
+        <option value="">Sección</option>
+        <option value="A">Sección A</option>
+        <option value="B">Sección B</option>
+        <option value="C">Sección C</option>
+        <option value="D">Sección D</option>
+        <option value="E">Sección E</option>
+        <option value="F">Sección F</option>
+      </select>
+    </div>
+    <button class="btn-primary visible" onclick="iniciar()">¡Empezar mi historia! →</button>
+  </div>
+</div>
+
+
+<!-- ===== INSTRUCCIONES ===== -->
+<div id="p-instrucciones" class="screen">
+  <div class="inst-logo-row">
+    <div class="inst-logo-box">Fü</div>
+    <div style="font-family:'Arial Black',Impact,sans-serif;font-size:22px;color:var(--amarillo);font-weight:900;">Finkü</div>
+  </div>
+  <div class="inst-titulo">¿Cómo funciona Finkü?</div>
+  <div class="inst-intro">Vas a vivir 3 etapas de tu vida financiera. Cada decisión tiene consecuencias reales.</div>
+
+  <div class="inst-card">
+    <div class="inst-card-icon">🎯</div>
+    <div>
+      <div class="inst-card-titulo">Toma decisiones</div>
+      <div class="inst-card-desc">En cada escenario eliges una opción. No hay trampa — piensa bien antes de elegir.</div>
+    </div>
+  </div>
+
+  <div class="inst-card">
+    <div class="inst-card-icon">💰</div>
+    <div>
+      <div class="inst-card-titulo">Tu balance financiero</div>
+      <div class="inst-card-desc">Cada decisión suma o resta soles a tu bolsillo. Empiezas desde S/ 0.</div>
+    </div>
+  </div>
+
+  <div class="inst-card">
+    <div class="inst-card-icon">⭐</div>
+    <div>
+      <div class="inst-card-titulo">Ganas XP</div>
+      <div class="inst-card-desc">El conocimiento financiero también cuenta. Buenas decisiones = más XP.</div>
+    </div>
+  </div>
+
+  <div class="inst-card">
+    <div class="inst-card-icon">🏆</div>
+    <div>
+      <div class="inst-card-titulo">Tu perfil final</div>
+      <div class="inst-card-desc">Al terminar las 15 decisiones descubres qué tipo de persona financiera eres. Tu perfil depende de <strong style="color:#fff">los dos</strong>: saldo Y conocimiento.</div>
+    </div>
+  </div>
+
+  <div class="inst-alerta">
+    <div style="font-size:22px;flex-shrink:0;">⚠️</div>
+    <div class="inst-alerta-txt">Tener mucho XP pero poco saldo... también tiene consecuencias.</div>
+  </div>
+
+  <button class="btn-primary visible" onclick="irJuego()" style="margin-top:24px;margin-bottom:8px;">¡Empezar mi historia! →</button>
+</div>
+
+
+
+
+
+
+<!-- ESCENARIO DINÁMICO -->
+<div id="p-escenario" class="screen">
+  <!-- HUD top -->
+  <div class="prog-wrap"><div class="prog-fill" id="prog-esc"></div></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:rgba(0,0,0,0.7);flex-shrink:0;z-index:10;position:relative;">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="logo-icon" style="background:#f5c518;color:#1a3a1a;width:28px;height:28px;font-size:12px;">Fü</div>
+      <div style="font-size:17px;color:#90b890;" id="esc-colegio">Finkü</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="font-size:17px;color:var(--amarillo);font-weight:800;" id="esc-xp">0 XP</div>
+      <div style="background:rgba(245,197,24,0.1);border:1px solid rgba(245,197,24,0.3);border-radius:20px;padding:3px 10px;font-size:15px;color:var(--amarillo);font-weight:800;" id="esc-nivel">1/15</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 14px 6px;background:rgba(0,0,0,0.6);flex-shrink:0;z-index:10;position:relative;border-bottom:1px solid rgba(255,255,255,0.06);">
+    <div style="display:flex;align-items:center;gap:7px;"><div style="width:28px;height:28px;border-radius:50%;border:2px solid #f5c518;overflow:hidden;background:#000;position:relative;flex-shrink:0;"><img id="hud-avatar" style="position:absolute;width:135%;height:135%;object-fit:cover;object-position:center 22%;top:-3%;left:-17%;" src=""></div><div style="font-size:15px;color:#90b890;"><span id="esc-nom">—</span> · <span id="esc-edad">17 años</span> · <span id="esc-grado" style="color:rgba(245,197,24,0.7)"></span></div></div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <div class="saldo-delta" id="sd-esc"></div>
+      <div style="font-size:18px;font-weight:800;color:#fff;" id="saldo-esc">S/ 0</div>
+      <div class="saldo-context" id="saldo-context">EN CERO</div>
+    </div>
+  </div>
+
+  <!-- VN Stage -->
+  <div class="vn-stage" id="vn-stage">
+    <div class="vn-bg phase-1" id="vn-bg"></div>
+    <div class="vn-char-wrap">
+      <img class="vn-char" id="vn-char" src="" alt="">
+    </div>
+    <!-- Dialog box (narrator) -->
+    <div class="vn-dialog-box" id="vn-dialog-box">
+      <div class="vn-speaker" id="vn-speaker">Narrador</div>
+      <div class="vn-text" id="vn-text"></div>
+      <div class="vn-tap-hint" id="vn-tap-hint">Toca para continuar ▼</div>
+    </div>
+    <!-- Options panel (hidden until dialog done) -->
+    <div class="vn-options-panel" id="vn-options-panel" style="display:none;">
+      <div class="vn-badge" id="esc-badge">📍 Decisión 1</div>
+      <div class="vn-question" id="esc-titulo">—</div>
+      <div class="dato-bomba" id="esc-dato" style="display:none;margin-bottom:10px;"><span class="dato-icon">💡</span><div class="dato-text" id="esc-dato-text">—</div></div>
+      <div id="opts-container"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TRANSICIÓN DINÁMICA -->
+<div id="p-trans" class="screen">
+  <div class="prog-wrap"><div class="prog-fill" id="prog-trans"></div></div>
+  <div class="trans-wrap">
+    <div class="trans-icon" id="trans-icon">🎓</div>
+    <div class="trans-titulo" id="trans-titulo">—</div>
+    <div class="trans-desc" id="trans-desc">—</div>
+    <div class="impacto-card">
+      <div class="imp-label">Resultado de tu decisión</div>
+      <div class="imp-val" id="trans-feedback">—</div>
+    </div>
+    <div class="saldo-trans">
+      <div class="saldo-trans-label">💰 Tu balance financiero</div>
+      <div class="saldo-trans-amount" id="trans-saldo">S/ 0</div>
+    </div>
+    <div class="dato-bomba" id="trans-dato" style="display:none;margin-bottom:14px;"><span class="dato-icon">💡</span><div class="dato-text" id="trans-dato-text">—</div></div>
+    <div class="teaching-card" id="trans-teaching"><div class="teaching-label">📚 Concepto clave</div><div class="teaching-text" id="trans-teaching-text">—</div></div>
+    <button class="btn-primary visible" id="trans-btn" onclick="siguienteEscenario()">Siguiente decisión →</button>
+  </div>
+</div>
+
+<!-- FASE TRANSICIÓN -->
+<div id="p-fase" class="screen">
+  <div class="prog-wrap"><div class="prog-fill" id="prog-fase"></div></div>
+  <div class="trans-wrap">
+    <div class="trans-icon" id="fase-icon">⏩</div>
+    <div class="trans-titulo" id="fase-titulo">—</div>
+    <div class="trans-desc" id="fase-desc">—</div>
+    <div class="saldo-trans">
+      <div class="saldo-trans-label">💰 Tu balance financiero</div>
+      <div class="saldo-trans-amount" id="fase-saldo">S/ 0</div>
+    </div>
+    <div class="impacto-card">
+      <div class="imp-label">Tu XP acumulado</div>
+      <div class="imp-val" id="fase-xp">0 XP</div>
+    </div>
+    <button class="btn-primary visible" onclick="siguienteEscenario()">Continuar →</button>
+  </div>
+</div>
+
+
+<!-- BONUS EVENT -->
+<div id="p-bonus" class="screen">
+  <div class="prog-wrap"><div class="prog-fill" id="prog-bonus"></div></div>
+  <div class="bonus-wrap">
+    <div class="bonus-icon" id="bonus-icon">💰</div>
+    <div class="bonus-titulo" id="bonus-titulo">¡Retorno de inversión!</div>
+    <div class="bonus-origen" id="bonus-origen">—</div>
+    <div class="bonus-desc" id="bonus-desc">—</div>
+    <div class="bonus-amount" id="bonus-amount">+S/ 0</div>
+    <div class="saldo-trans">
+      <div class="saldo-trans-label">💰 Tu nuevo balance</div>
+      <div class="saldo-trans-amount" id="bonus-saldo">S/ 0</div>
+    </div>
+    <button class="btn-primary visible" id="bonus-btn" onclick="continuarDespuesDeBonus()">Continuar →</button>
+  </div>
+</div>
+
+<!-- RESULTADO FINAL -->
+<div id="p-final" class="screen">
+  <div class="prog-wrap"><div class="prog-fill" style="width:100%"></div></div>
+  <div class="final-wrap">
+    <div class="final-emoji" id="f-emo">🏆</div>
+    <div class="final-title" id="f-tit">—</div>
+    <div class="final-sub" id="f-sub">—</div>
+    <div class="final-desc" id="f-desc">—</div>
+    <div class="final-stats">
+      <div class="final-stat">
+        <div class="final-stat-label">⭐ XP Total</div>
+        <div class="final-stat-value" id="f-xp">0</div>
+      </div>
+      <div class="final-stat">
+        <div class="final-stat-label">💰 Balance Final</div>
+        <div class="final-stat-value" id="f-saldo">S/ 0</div>
+      </div>
+    </div>
+    <div class="feedback-section" id="feedback-container"></div>
+    <button class="btn-primary visible" onclick="iniciarPosttest()">Responder post-test →</button>
+  </div>
+</div>
+
+<!-- POST-TEST -->
+<div id="p-posttest" class="screen">
+  <div class="pretest-hero" style="background:linear-gradient(135deg,#1a2a4a,#0a1a3a);border-bottom:1px solid rgba(100,140,220,0.3);">
+    <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;">
+      <span style="font-size:22px;">🎯</span>
+      <div class="pretest-titulo" style="margin-bottom:0;">Post-test financiero</div>
+    </div>
+    <div class="pretest-sub" style="color:#a8c4e8;">Las mismas preguntas de antes.<br>¿Aprendiste algo nuevo jugando?</div>
+  </div>
+  <div class="pretest-body" id="posttest-body"></div>
+</div>
+
+<!-- MENTOR -->
+<div id="p-mentor" class="screen">
+  <div class="prog-wrap"><div class="prog-fill" style="width:100%"></div></div>
+  <div class="mentor-wrap">
+    <div class="mentor-student-badge">
+      <span class="mentor-student-icon" id="mentor-student-icon">🏆</span>
+      <div>
+        <div class="mentor-student-name" id="mentor-student-name">—</div>
+        <div class="mentor-student-title" id="mentor-student-title">—</div>
+      </div>
+    </div>
+    <div class="mentor-banker-wrap">
+      <div class="mentor-banker-ring">
+        <img src="images/img_010.png" style="width:100%;height:100%;object-fit:cover;object-position:center top;">
+      </div>
+      <div class="mentor-banker-info">
+        <div class="mentor-banker-name">Lic. Carlos Mendoza</div>
+        <div class="mentor-banker-role">Asesor Financiero</div>
+      </div>
+    </div>
+    <div class="mentor-card">
+      <div class="mentor-greeting" id="mentor-greeting">—</div>
+      <div class="mentor-texto" id="mentor-texto">—</div>
+    </div>
+    <button class="btn-mentor-continuar" onclick="reiniciar()">🔄 Jugar de nuevo</button>
+  </div>
+</div>
+
+</div><!-- fin phone -->
+
+<script>
+// ===== AVATARS =====
+const AVATARS = {
+  "av_f_cla_feliz": "images/img_011.jpg",
+  "av_f_cla_mal": "images/img_012.jpg",
+  "av_f_cla_neutro": "images/img_013.jpg",
+  "av_f_med_feliz": "images/img_014.jpg",
+  "av_f_med_mal": "images/img_015.jpg",
+  "av_f_med_neutro": "images/img_016.jpg",
+  "av_f_osc_feliz": "images/img_017.jpg",
+  "av_f_osc_mal": "images/img_018.jpg",
+  "av_f_osc_neutro": "images/img_019.jpg",
+  "av_m_cla_feliz": "images/img_020.jpg",
+  "av_m_cla_mal": "images/img_021.jpg",
+  "av_m_cla_neutro": "images/img_022.jpg",
+  "av_m_med_feliz": "images/img_023.jpg",
+  "av_m_med_mal": "images/img_024.jpg",
+  "av_m_med_neutro": "images/img_025.jpg",
+  "av_m_osc_feliz": "images/img_026.jpg",
+  "av_m_osc_mal": "images/img_027.jpg",
+  "av_m_osc_neutro": "images/img_028.jpg",
+};
+
+// ===== GAME STATE =====
+let G = { nombre:'', genero:'M', piel:'med', distrito:'', carrera:'' };
+let G_colegio = '';
+let xp = 0;
+let saldo = 0;
+let currentDecision = 0;
+let decisions_made = [];
+
+// ===== PHASES =====
+const PHASES = {
+  1: { name:'El Despegue', age:'17 años · 5to Secundaria', emoji:'🎓' },
+  2: { name:'La Prueba', age:'20 años · 7mo Ciclo', emoji:'💼' },
+  3: { name:'El Salto', age:'23 años · Recién Egresado', emoji:'🚀' }
+};
+
+// ===== 15 DECISIONS =====
+const DECISIONS = [
+  // FASE 1 — El Despegue (17 años, 5to Secundaria)
+  { id:1, phase:1, badge:'📍 Fase 1 · Decisión 1', title:'¿Dónde estudio?',
+    desc:'¡Felicitaciones! Terminaste el colegio. Tu familia te apoyará, pero el nivel de esfuerzo financiero cambia según tu elección.',
+    dato:'1 de cada 3 universitarios abandona antes del 5to año — y la deuda sigue aunque dejes de estudiar.',
+    options:[
+      { text:'🏛️ Universidad Pública', detail:'Sin pensión. Solo gastas en materiales básicos. Impacto: <b style="color:#fff">S/ 0</b>', xp:30, money:0, feedback:'Educación de calidad sin endeudarte. Gran arranque.' },
+      { text:'📘 Privada media', detail:'Pensión S/ 1,300/mes. Con apoyo familiar, tu parte mensual: <b style="color:#fff">-S/ 650</b>', xp:20, money:-650, feedback:'Inversión razonable. Las cuotas pesan, pero es manejable con disciplina.' },
+      { text:'🏆 Privada premium', detail:'Pensión S/ 2,500/mes. Con apoyo familiar, tu parte mensual: <b style="color:#fff">-S/ 1,250</b>', xp:10, money:-1250, feedback:'Compromiso fuerte. Tu familia siente la presión desde el primer mes.' }
+    ], teaching:"El costo real de una carrera incluye mensualidades, materiales, transporte y el costo de oportunidad de no trabajar. Una universidad privada premium puede superar S/ 150,000 en 5 años." },
+  { id:2, phase:1, badge:'📍 Fase 1 · Decisión 2', title:'¿Cómo me transporto?',
+    desc:'Cada día necesitas ir a la universidad y volver. El transporte parece un gasto pequeño, pero se acumula mes a mes.',
+    dato:'El peruano promedio gasta entre S/ 150 y S/ 450 mensuales solo en transporte.',
+    options:[
+      { text:'🚌 Micro / transporte público', detail:'Pasajes diarios. Gasto mensual: <b style="color:#fff">-S/ 100</b>', xp:20, money:-100, feedback:'Gasto mínimo. Decisión racional.' },
+      { text:'🚲 Bici propia', detail:'Compras una bici. Inversión única: <b style="color:#fff">-S/ 250</b>', xp:25, money:-250, feedback:'Inversión inteligente: costo inicial pero ahorro sostenido a largo plazo.' },
+      { text:'🚕 Uber / taxi diario', detail:'Cómodo pero caro. Gasto mensual: <b style="color:#fff">-S/ 450</b>', xp:5, money:-450, feedback:'Gasto hormiga: cómodo pero destruye tu bolsillo sin que lo notes.' }
+    ], teaching:"El 'gasto hormiga' son pequeños gastos diarios casi invisibles. S/ 5 extra al día = S/ 150/mes = S/ 1,800/año. El primer paso para ahorrar es identificar lo que parece insignificante." },
+  { id:3, phase:1, badge:'📍 Fase 1 · Decisión 3', title:'¿Trabajo mientras estudio?',
+    desc:'Estás en la universidad y necesitas dinero. Algunos amigos trabajan, otros solo estudian. ¿Qué haces tú?',
+    dato:'Los estudiantes que trabajan part-time tienen 40% más probabilidad de terminar la carrera.',
+    options:[
+      { text:'💼 Sí, part-time', detail:'Trabajo de medio tiempo. Ingreso mensual: <b style="color:#fff">+S/ 500</b>', xp:25, money:500, feedback:'Tu primer ingreso real + experiencia laboral.' },
+      { text:'📚 No, me enfoco en estudiar', detail:'Priorizas tus notas. Ingreso: <b style="color:#fff">S/ 0</b>', xp:15, money:0, feedback:'Válido, pero sigues con el bolsillo vacío.' },
+      { text:'💻 Freelance ocasional', detail:'Trabajos por encargo. Ingreso promedio: <b style="color:#fff">+S/ 300</b>', xp:30, money:300, feedback:'Mentalidad emprendedora. Ingreso irregular pero aprendes a generar.' }
+    ], teaching:"Un fondo de emergencia equivale a 3-6 meses de gastos guardados. No es para caprichos — es para imprevistos. Sin él, cualquier emergencia se convierte automáticamente en deuda." },
+  { id:4, phase:1, badge:'📍 Fase 1 · Decisión 4', title:'¿Abro mi primera cuenta bancaria?',
+    desc:'Tienes algo de dinero. ¿Lo guardas debajo del colchón o empiezas a construir un historial financiero?',
+    dato:'Solo el 43% de peruanos adultos tiene una cuenta bancaria. Quienes empiezan jóvenes tienen mejor historial crediticio.',
+    options:[
+      { text:'🏦 Cuenta de ahorros', detail:'Tus soles generan intereses. Ganancia: <b style="color:#fff">+S/ 50</b>', xp:30, money:50, feedback:'Hábito financiero clave: empiezas historial crediticio.' },
+      { text:'💳 Cuenta corriente', detail:'Útil para pagos, sin rendimiento. Impacto: <b style="color:#fff">S/ 0</b>', xp:15, money:0, feedback:'Útil pero no te genera rendimiento.' },
+      { text:'🚫 No abro nada', detail:'Plata en el bolsillo se gasta fácil. Pierdes: <b style="color:#fff">-S/ 50</b>', xp:0, money:-50, feedback:'Dinero en efectivo se pierde fácil y no generas historial.' }
+    ], teaching:"La regla del presupuesto: Ingresos - Gastos fijos - Ahorro = Lo disponible para gastar. Si no planificas primero el ahorro, los gastos siempre consumirán todo el ingreso." },
+  { id:5, phase:1, badge:'📍 Fase 1 · Decisión 5', title:'¿Qué hago con mi primer ingreso?',
+    desc:'Recibes tu primera propina grande o beca. Son S/ 400. ¿Qué haces con ese dinero?',
+    dato:'El 70% de los jóvenes gasta su primer ingreso completo en menos de una semana.',
+    options:[
+      { text:'🐷 Lo ahorro', detail:'Depositas los S/ 400 en tu cuenta: <b style="color:#fff">+S/ 400</b>', xp:25, money:400, feedback:'Disciplina financiera desde joven. Tu capital crece.' },
+      { text:'🛍️ Lo gasto en lo que quiero', detail:'Ropa, salidas, gadgets. Gastas todo: <b style="color:#fff">-S/ 400</b>', xp:5, money:-400, feedback:'Rico una semana, quebrado el resto del mes.' },
+      { text:'📖 Lo invierto en cursos', detail:'Compras materiales y un curso online: <b style="color:#fff">-S/ 200</b>', xp:30, money:-200, feedback:'Gasto inteligente: cuesta ahora pero vale después.' }
+    ], teaching:"La TEA (Tasa Efectiva Anual) de una tarjeta de crédito en Perú puede superar el 80%. Pagar solo el mínimo mensual puede triplicar el costo original de lo que compraste." },
+  // FASE 2 — La Prueba (20 años, 7mo Ciclo)
+  { id:6, phase:2, badge:'📍 Fase 2 · Decisión 6', title:'¿Cómo manejo mi sueldo?',
+    desc:'Ya estás en 7mo ciclo y trabajas como practicante. Tu subvención mensual: S/ 1,130 íntegros (los practicantes no pagan AFP ni impuestos según Ley 28518). ¿Cómo lo distribuyes?',
+    dato:'La regla 50/30/20 es el estándar mundial: 50% necesidades, 30% gustos, 20% ahorro.',
+    options:[
+      { text:'📊 Regla 50/30/20', detail:'50% necesidades, 30% gustos, 20% ahorro. Ahorras: <b style="color:#fff">+S/ 230</b>/mes', xp:35, money:230, feedback:'El estándar de oro. Necesidades, gustos, ahorro. Funciona.' },
+      { text:'💸 Gasto primero, ahorro lo que sobra', detail:'Pagas, disfrutas... y terminas gastando de más: <b style="color:#fff">-S/ 150</b>', xp:5, money:-150, feedback:'Spoiler: nunca sobra nada.' },
+      { text:'🏧 Todo al banco sin presupuesto', detail:'Depositas todo y vas sacando. Ahorras algo: <b style="color:#fff">+S/ 80</b>', xp:15, money:80, feedback:'Buena intención, cero estrategia.' }
+    ], teaching:"Deuda buena: financia algo que genera valor (educación, negocio). Deuda mala: financia consumo que desaparece. Antes de endeudarte, pregunta: ¿esto me generará más dinero del que me costará?" },
+  { id:7, phase:2, badge:'📍 Fase 2 · Decisión 7', title:'¿Pido mi primera tarjeta de crédito?',
+    desc:'El banco te ofrece una tarjeta pre-aprobada. TEA: 79.9%. ¿Cómo la manejas?',
+    dato:'Si pagas solo el mínimo de S/ 60/mes, una deuda de S/ 2,000 se convierte en S/ 3,598 en 12 meses.',
+    options:[
+      { text:'💳 Sí, límite bajo + pago total', detail:'Límite S/ 1,000. Pagas todo cada mes. Impacto: <b style="color:#fff">S/ 0</b>', xp:30, money:0, feedback:'Construyes historial crediticio sin costo. Disciplina pura.' },
+      { text:'💳 Sí, límite alto', detail:'Límite S/ 5,000. Te tientas y gastas de más: <b style="color:#fff">-S/ 600</b>', xp:10, money:-600, feedback:'La tentación de gastar lo que no tienes. Deuda peligrosa.' },
+      { text:'🚫 No, por ahora', detail:'Rechazas la oferta. Sin cambio: <b style="color:#fff">S/ 0</b>', xp:20, money:0, feedback:'Conservador: no pierdes, pero tampoco construyes historial.' }
+    ], teaching:"La Ley 28518 protege a los practicantes en Perú. Reciben una subvención mínima de S/ 1,130 íntegros, sin descuento de AFP ni impuesto a la renta. Es el primer ingreso real de muchos jóvenes." },
+  { id:8, phase:2, speaker:'Tu compañero de universidad', bg:'phase-cancun', badge:'📍 Fase 2 · Decisión 8', title:'¿Qué hago en vacaciones?',
+    desc:'Terminaste el ciclo. Tienes 3 semanas libres. Tus amigos planean un viaje, pero también hay un curso que te interesa.',
+    dato:'La inversión en educación continua tiene un retorno promedio de 10x en 5 años.',
+    options:[
+      { text:'✈️ Viaje financiado a cuotas', detail:'Viaje a Cusco con amigos, todo a cuotas: <b style="color:#fff">-S/ 700</b>', xp:10, money:-700, feedback:'Deuda por una experiencia que ya pasó. Las cuotas quedan.' },
+      { text:'🏠 Me quedo y ahorro', detail:'No gastas nada extra. Ahorras: <b style="color:#fff">+S/ 400</b>', xp:20, money:400, feedback:'Disciplinado. ¿A qué costo personal?' },
+      { text:'📚 Curso de especialización', detail:'Inviertes en una certificación: <b style="color:#fff">-S/ 350</b>', xp:35, money:-350, feedback:'Inviertes en ti: cuesta ahora, rinde después.' }
+    ], teaching:"La AFP descuenta entre 10% y 13% de tu sueldo bruto para tu jubilación. Por eso el sueldo neto — lo que realmente recibes — siempre es menor al bruto. Negocia siempre pensando en el neto." },
+  { id:9, phase:2, speaker:'Tu compañera de universidad', bg:'phase-mall', badge:'📍 Fase 2 · Decisión 9', title:'¿Me voy de shopping?',
+    desc:'"¡Oye! Este finde hay rebajas en el Jockey Plaza, vamos todos. Algo bonito siempre cae bien, ¿no? Además con cuotas ni se siente..."',
+    dato:'El peruano promedio gasta 8% de su sueldo en ropa. Los que compran a cuotas pagan 40% más.',
+    options:[
+      { text:'👔 Sí, al contado', detail:'Compras lo que quieres de una vez: <b style="color:#fff">-S/ 400</b>', xp:15, money:-400, feedback:'Gastas pero al menos no te endeudas.' },
+      { text:'💳 Sí, a cuotas', detail:'Compras a 6 cuotas. Con intereses pagas: <b style="color:#fff">-S/ 650</b>', xp:5, money:-650, feedback:'Deuda por ropa. El peor tipo de deuda que existe.' },
+      { text:'⏳ No, espero ofertas', detail:'Esperas liquidaciones. No gastas: <b style="color:#fff">S/ 0</b>', xp:25, money:0, feedback:'Consumo inteligente: paciencia financiera.' }
+    ], teaching:"El interés compuesto es el fenómeno más poderoso en finanzas. Invertir S/ 200/mes desde los 22 años puede generar más patrimonio que S/ 500/mes desde los 35. El tiempo es el activo más valioso." },
+  { id:10, phase:2, speaker:'Tu mamá', bg:'phase-mama', badge:'📍 Fase 2 · Decisión 10', title:'¿Ayudo económicamente a mi familia?',
+    desc:(()=>`"Hijit${G.genero==='M'?'o':'a'}, estos meses están complicados económicamente en casa. ¿Puedes ayudarme con algo? No te pido mucho..."`)(),
+    dato:'En Perú, el 65% de jóvenes trabajadores aporta al hogar familiar. La red familiar es un activo financiero real.',
+    options:[
+      { text:'💝 Sí, monto fijo mensual', detail:'Separas cada mes para tu familia: <b style="color:#fff">-S/ 300</b>', xp:25, money:-300, feedback:'Responsable y solidario. Impacta tu liquidez pero fortalece tu red.' },
+      { text:'🆘 Solo en emergencias', detail:'Ayudas cuando hay urgencia. Promedio: <b style="color:#fff">-S/ 100</b>', xp:30, money:-100, feedback:'Equilibrio entre solidaridad y sostenibilidad personal.' },
+      { text:'🙅 Aún no puedo', detail:'Le explicas que no ganas suficiente: <b style="color:#fff">S/ 0</b>', xp:15, money:0, feedback:'Honesto, pero no construyes capital social familiar.' }
+    ], teaching:"El costo de oportunidad es lo que renuncias al tomar una decisión. Gastar S/ 1,000 hoy significa renunciar a lo que ese dinero podría generar invertido. No existe decisión financiera gratuita." },
+  // FASE 3 — El Salto (23 años, Recién Egresado)
+  { id:11, phase:3, speaker:'Tu Jefe', bg:'phase-trabajo', badge:'📍 Fase 3 · Decisión 11', title:'¿Acepto la primera oferta laboral?',
+    desc:'Egresaste. Llega una oferta: S/ 2,200 brutos en una empresa mediana. Después de AFP (13%) e IR te quedan S/ 1,800 netos. ¿Qué haces?',
+    dato:'Los profesionales que negocian su primer sueldo ganan en promedio 15% más a lo largo de su carrera.',
+    options:[
+      { text:'✅ Sí, acepto', detail:'Ingreso neto inmediato: <b style="color:#fff">+S/ 1,800</b>', xp:15, money:1800, feedback:'Ingreso seguro pero te infravaloras. Ese sueldo base te persigue años.' },
+      { text:'💪 Negocio el sueldo', detail:'Pides S/ 2,800 brutos. Neto: <b style="color:#fff">+S/ 2,300</b>', xp:35, money:2300, feedback:'Habilidad clave: conocer y defender tu valor en el mercado.' },
+      { text:'❌ Rechazo y busco más', detail:'2 meses sin ingreso. Gastas ahorros: <b style="color:#fff">-S/ 800</b>', xp:20, money:-800, feedback:'Riesgo: puede pagar con un mejor empleo... o no.' }
+    ], teaching:"En Perú, el sueldo bruto descuenta AFP (10-13%) e IR según tu rango. Un sueldo de S/ 2,200 brutos puede convertirse en S/ 1,800 netos. Siempre negocia y compara en función del neto." },
+  { id:12, phase:3, speaker:'Tus amigos', bg:'phase-trafico', badge:'📍 Fase 3 · Decisión 12', title:'¿Dónde vivo?',
+    desc:'"Ya estoy hart@ del tráfico de Lima. ¿Y si alquilamos un depa entre varios? Sale más barato y nos ahorramos 2 horas al día..."',
+    dato:'Un alquiler en Lima puede consumir entre 30% y 50% de tu sueldo neto.',
+    options:[
+      { text:'🏠 Con mis padres y ahorro', detail:'Te quedas en casa. Ahorras al mes: <b style="color:#fff">+S/ 700</b>', xp:25, money:700, feedback:'Máxima acumulación. Pragmático.' },
+      { text:'🏢 Alquilo solo', detail:'Independencia total. Alquiler mensual: <b style="color:#fff">-S/ 900</b>', xp:15, money:-900, feedback:'Independencia costosa: libertad vs. capital.' },
+      { text:'👥 Alquilo con amigos', detail:'Compartes depa. Tu parte mensual: <b style="color:#fff">-S/ 350</b>', xp:30, money:-350, feedback:'Equilibrio inteligente: independencia + costo compartido.' }
+    ], teaching:"Alquilar no es tirar el dinero. Comprar tampoco es siempre mejor. Depende del precio del inmueble, la tasa hipotecaria y cuánto tiempo vivirás ahí. Compara siempre el costo real de ambas opciones." },
+  { id:13, phase:3, speaker:'Tu jefe', bg:'phase-trabajo', badge:'📍 Fase 3 · Decisión 13', title:'¿Empiezo a invertir?',
+    desc:'"Oye, ya llevas meses trabajando. ¿Ya estás moviendo tu plata o la dejas dormir en el banco? Yo empecé con fondos mutuos a tu edad y fue lo mejor que hice."',
+    dato:'Si inviertes S/ 200/mes desde los 23 años con 8% de retorno, a los 55 tendrás más de S/ 300,000.',
+    options:[
+      { text:'📈 AFP voluntaria', detail:'Aportas extra a tu pensión. Mes: <b style="color:#fff">-S/ 200</b>', xp:25, money:-200, feedback:'Pensión a largo plazo. Disciplinado pero poco líquido.' },
+      { text:'💹 Fondos mutuos', detail:'Diversificas tu inversión. Mes: <b style="color:#fff">-S/ 300</b>', xp:35, money:-300, feedback:'Diversificación inteligente. Mayor retorno potencial.' },
+      { text:'⏸️ No, primero liquido deudas', detail:'Pagas lo que debes. Recuperas: <b style="color:#fff">+S/ 150</b>', xp:20, money:150, feedback:'Responsable si tienes deuda, pero pierdes tiempo de interés compuesto.' }
+    ], teaching:"Diversificar significa distribuir el riesgo entre distintos activos. No pongas todos tus ahorros en un solo lugar. Así, si una inversión falla, no pierdes todo lo acumulado." },
+  { id:14, phase:3, speaker:'Tu amigo de universidad', bg:'phase-carro', badge:'📍 Fase 3 · Decisión 14', title:'¿Compro un auto?',
+    desc:(()=>`"Herman${G.genero==='M'?'o':'a'}, míra ese carro, roja, cero kilómetros. Con el crédito vehicular la cuota mensual es como nada... ¿te la vas a perder?"`)(),
+    dato:'Un auto nuevo pierde 20% de su valor el primer año. Cuota + seguro + combustible puede ser 3x la cuota sola.',
+    options:[
+      { text:'🚗 Sí, al crédito', detail:'Cuota + seguro + combustible mensual: <b style="color:#fff">-S/ 1,100</b>', xp:10, money:-1100, feedback:'Deuda por un activo que pierde valor cada día. Error clásico.' },
+      { text:'💰 Sí, al contado', detail:'Usas tus ahorros. Desembolso: <b style="color:#fff">-S/ 600</b>', xp:20, money:-600, feedback:'Mejor que crédito, pero sigue siendo un activo que se deprecia.' },
+      { text:'🚌 No, transporte público', detail:'Bus y apps. Gasto mensual: <b style="color:#fff">-S/ 100</b>', xp:30, money:-100, feedback:'Decisión financieramente superior en contexto urbano peruano.' }
+    ], teaching:"Emprender requiere capital inicial, tolerancia al riesgo y flujo de caja negativo los primeros meses. El error más común: subestimar los costos fijos y sobreestimar las ventas iniciales." },
+  { id:15, phase:3, speaker:'Conferencista TED', bg:'phase-ted', badge:'📍 Fase 3 · Decisión 15', title:'¿Qué hago con mi línea de carrera?',
+    desc:'"Imagina que llevas muchos años en el mercado. La mayoría se queda cómoda ahí, en un mismo trabajo, sin plan B. Pero los que cambian su vida toman una decisión distinta: ¿te quedas, emprendes o inviertes en ti mismo?"',
+    dato:'Un MBA o maestría puede duplicar tu sueldo en 5 años, pero cuesta en promedio S/ 50,000 en Perú.',
+    options:[
+      { text:'🎓 Me especializo', detail:'Maestría o certificación. Inversión mensual: <b style="color:#fff">-S/ 500</b>', xp:35, money:-500, feedback:'Inversión en ti con retorno demostrable a mediano plazo.' },
+      { text:'🚀 Emprendo', detail:'Capital inicial de tu negocio: <b style="color:#fff">-S/ 600</b>', xp:30, money:-600, feedback:'Alto riesgo, alto retorno. Mentalidad de creador.' },
+      { text:'🛋️ Me quedo donde estoy', detail:'Sueldo estable. Recibes aumento: <b style="color:#fff">+S/ 200</b>', xp:10, money:200, feedback:'Zona de confort: estable pero estancado.' }
+    ], teaching:"Patrimonio neto = Activos - Pasivos. Puedes ganar mucho y tener patrimonio cero si tus deudas crecen igual que tus ingresos. El objetivo financiero de vida: que tus activos siempre superen a tus pasivos." }
+]
+
+// ===== PROFILES =====
+const PROFILES = [
+  { emoji:'🏆', title:'Estratega Financiero', minXP:380, minMoney:2500,
+    desc:'Tomaste decisiones inteligentes y las ejecutaste. Vas camino a construir riqueza real.',
+    mentor:'Escúchame bien: lo que acabas de demostrar es que tienes criterio financiero. Eso no se aprende en un día — se construye decisión tras decisión. Ahora llévalo a la vida real.' },
+  { emoji:'📈', title:'Inversionista en Formación', minXP:300, minMoney:1000,
+    desc:'Buenas bases con algunos tropiezos. Con ajustes, vas a ser imparable.',
+    mentor:'Tienes buenas bases pero cometiste algunos errores. Lo importante es que los reconoces. Ajusta tu estrategia y en unos años estarás en la cima.' },
+  { emoji:'⚖️', title:'Equilibrista', minXP:220, minMoney:-500,
+    desc:'Ni tan mal ni tan bien. Sabes algo pero te falta consistencia.',
+    mentor:'Estás en el punto medio. Sabes lo que deberías hacer, pero no siempre lo ejecutas. La diferencia entre saber y hacer es donde se construye el patrimonio.' },
+  { emoji:'⚠️', title:'En Zona de Riesgo', minXP:175, minMoney:-3500,
+    desc:'Más errores que aciertos. Necesitas reforzar tu educación financiera.',
+    mentor:'Varias de tus decisiones te pusieron en una posición difícil. No es el fin — pero necesitas un plan. Empieza por controlar tus gastos y eliminar deudas.' },
+  { emoji:'🚨', title:'Alerta Roja', minXP:0, minMoney:-99999,
+    desc:'Patrón de decisiones peligroso. Pero nunca es tarde para aprender.',
+    mentor:'Tu situación es complicada, pero reconocerlo a los 23 es una ventaja enorme. La mayoría lo hace a los 35. Busca orientación financiera gratuita en la SBS.' }
+];
+
+
+// ===== BONUS SYSTEM (Delayed Returns) =====
+const BONUSES = [
+  // Format: { triggerBefore: decision#, requireDecision: past_decision#, requireOption: optionIndex, 
+  //           icon, title, origin, desc, xpBonus, moneyBonus }
+  
+  // If invested in courses (Dec 5, opt 2) → bonus when entering Phase 2
+  { triggerBefore:6, requireDecision:5, requireOption:2,
+    icon:'📚', title:'¡Tu inversión en cursos rindió frutos!',
+    origin:'Decisión 5 · Invertiste en materiales y cursos',
+    desc:'Gracias a los materiales y cursos que compraste, tu rendimiento académico mejoró. Tu universidad te otorga una beca parcial por buen desempeño.',
+    xpBonus:15, moneyBonus:200 },
+
+  // If opened savings account (Dec 4, opt 0) → interest bonus entering Phase 2
+  { triggerBefore:6, requireDecision:4, requireOption:0,
+    icon:'🏦', title:'¡Tus ahorros generaron intereses!',
+    origin:'Decisión 4 · Abriste cuenta de ahorros',
+    desc:'Tu cuenta de ahorros ha estado trabajando silenciosamente. Después de 3 años, tus depósitos generaron intereses. El dinero trabaja para ti.',
+    xpBonus:10, moneyBonus:150 },
+
+  // If worked freelance (Dec 3, opt 2) → client returns in Phase 2
+  { triggerBefore:8, requireDecision:3, requireOption:2,
+    icon:'💻', title:'¡Un cliente antiguo te recomendó!',
+    origin:'Decisión 3 · Hiciste freelance',
+    desc:'Un cliente para el que trabajaste como freelancer te recomendó con su empresa. Te ofrecen un proyecto extra bien pagado.',
+    xpBonus:10, moneyBonus:250 },
+
+  // If took specialization course (Dec 8, opt 2) → better salary entering Phase 3
+  { triggerBefore:11, requireDecision:8, requireOption:2,
+    icon:'🎓', title:'¡Tu especialización te abrió puertas!',
+    origin:'Decisión 8 · Tomaste un curso de especialización',
+    desc:'La certificación que obtuviste en vacaciones aparece en tu CV. Las empresas la valoran y te ofrecen un mejor puesto inicial.',
+    xpBonus:15, moneyBonus:350 },
+
+  // If managed salary with 50/30/20 (Dec 6, opt 0) → emergency fund saves you
+  { triggerBefore:14, requireDecision:6, requireOption:0,
+    icon:'🛡️', title:'¡Tu fondo de emergencia te salvó!',
+    origin:'Decisión 6 · Usaste la regla 50/30/20',
+    desc:'Tu disciplina con el 50/30/20 creó un colchón financiero. Cuando tu laptop se malogró, pudiste reemplazarla sin endeudarte.',
+    xpBonus:10, moneyBonus:200 },
+
+  // If credit card with low limit (Dec 7, opt 0) → good credit score
+  { triggerBefore:13, requireDecision:7, requireOption:0,
+    icon:'⭐', title:'¡Tu historial crediticio es excelente!',
+    origin:'Decisión 7 · Tarjeta con límite bajo y pago total',
+    desc:'Por pagar siempre el total de tu tarjeta, tu score crediticio subió. El banco te ofrece una tasa preferencial para inversiones.',
+    xpBonus:10, moneyBonus:200 },
+  // BONOS FASE 3 → Se aplican al final
+  { triggerBefore:99, requireDecision:11, requireOption:1,
+    icon:'💰', title:'¡Tu negociación rindió frutos!',
+    origin:'Decisión 11 · Negociaste tu sueldo',
+    desc:'Negociaste tu primer sueldo y sentaste un precedente. Un año después, tu aumento fue mayor porque partiste de una base más alta.',
+    xpBonus:10, moneyBonus:300 },
+  { triggerBefore:99, requireDecision:12, requireOption:2,
+    icon:'🏠', title:'¡Ahorro inteligente en vivienda!',
+    origin:'Decisión 12 · Alquilaste con amigos',
+    desc:'Compartir departamento te permitió ahorrar la diferencia. Ese dinero extra lo usaste para un fondo de emergencia que te salvó de un imprevisto.',
+    xpBonus:10, moneyBonus:250 },
+  { triggerBefore:99, requireDecision:13, requireOption:1,
+    icon:'📈', title:'¡Tu inversión creció!',
+    origin:'Decisión 13 · Invertiste en fondos mutuos',
+    desc:'Los fondos mutuos donde invertiste tuvieron un retorno de 12% anual. Tu dinero trabajó para ti mientras dormías.',
+    xpBonus:15, moneyBonus:400 },
+  { triggerBefore:99, requireDecision:15, requireOption:0,
+    icon:'🎓', title:'¡Tu maestría se pagó sola!',
+    origin:'Decisión 15 · Te especializaste',
+    desc:'La certificación que obtuviste te permitió acceder a un puesto senior. Tu sueldo subió 40% en el primer año.',
+    xpBonus:15, moneyBonus:500 },
+  { triggerBefore:99, requireDecision:15, requireOption:1,
+    icon:'🚀', title:'¡Tu emprendimiento despegó!',
+    origin:'Decisión 15 · Emprendiste',
+    desc:'Tu negocio tardó 6 meses en ser rentable, pero al año ya generaba más que tu sueldo anterior. Alto riesgo, alto retorno.',
+    xpBonus:15, moneyBonus:450 },
+];
+
+let pendingBonuses = [];
+let afterBonusAction = null;
+
+function checkBonuses(beforeDecision) {
+  pendingBonuses = [];
+  for(const b of BONUSES) {
+    if(b.triggerBefore === beforeDecision) {
+      const pastDec = decisions_made.find(d => d.id === b.requireDecision);
+      if(pastDec && pastDec.optIdx === b.requireOption) {
+        pendingBonuses.push(b);
+      }
+    }
+  }
+  return pendingBonuses.length > 0;
+}
+
+function showNextBonus(afterAction) {
+  if(afterAction) afterBonusAction = afterAction;
+  if(pendingBonuses.length === 0) {
+    if(afterBonusAction) afterBonusAction();
+    return;
+  }
+  const b = pendingBonuses.shift();
+  const progress = Math.round((currentDecision/15)*100);
+  document.getElementById('prog-bonus').style.width = progress+'%';
+  document.getElementById('bonus-icon').textContent = b.icon;
+  document.getElementById('bonus-titulo').textContent = b.title;
+  document.getElementById('bonus-origen').textContent = b.origin;
+  document.getElementById('bonus-desc').textContent = b.desc;
+  
+  // Apply bonus
+  xp += b.xpBonus;
+  saldo += b.moneyBonus;
+  
+  document.getElementById('bonus-amount').textContent = '+S/ ' + b.moneyBonus + '  (+' + b.xpBonus + ' XP)';
+  document.getElementById('bonus-saldo').textContent = 'S/ ' + saldo;
+  
+  sonidoMoneda();
+  spawnParticles(window.innerWidth/2, window.innerHeight/3, '#4ade80', 15);
+  
+  ir('p-bonus');
+}
+
+function continuarDespuesDeBonus() {
+  if(pendingBonuses.length > 0) {
+    showNextBonus();
+  } else if(afterBonusAction) {
+    afterBonusAction();
+    afterBonusAction = null;
+  }
+}
+
+
+// ===== BONUS BEFORE PHASE =====
+function mostrarBonusDeFase(nextIdx) {
+  const nextPhaseId = DECISIONS[nextIdx].id;
+  // Collect all bonuses that trigger before any decision in the next phase
+  const nextPhase = DECISIONS[nextIdx].phase;
+  let faseBonuses = [];
+  for(const b of BONUSES) {
+    if(b.triggerBefore !== 99) {
+      // Check if this bonus triggers before any decision in the next phase
+      const triggerDec = DECISIONS.find(d => d.id === b.triggerBefore);
+      if(triggerDec && triggerDec.phase === nextPhase) {
+        const pastDec = decisions_made.find(d => d.id === b.requireDecision);
+        if(pastDec && pastDec.optIdx === b.requireOption) {
+          faseBonuses.push(b);
+        }
+      }
+    }
+  }
+  if(faseBonuses.length > 0) {
+    pendingBonuses = faseBonuses;
+    showNextBonus(function(){ mostrarFase(nextIdx); });
+  } else {
+    mostrarFase(nextIdx);
+  }
+}
+
+// ===== AUDIO =====
+const AC = new (window.AudioContext || window.webkitAudioContext)();
+function beep(freq,dur,type='sine',vol=0.3){try{const o=AC.createOscillator(),g=AC.createGain();o.connect(g);g.connect(AC.destination);o.frequency.value=freq;o.type=type;g.gain.setValueAtTime(vol,AC.currentTime);g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+dur);o.start();o.stop(AC.currentTime+dur);}catch(e){}}
+function sonidoOk(){beep(523,0.1);setTimeout(()=>beep(659,0.1),100);setTimeout(()=>beep(784,0.2),200);}
+function sonidoMoneda(){beep(1047,0.05);setTimeout(()=>beep(1319,0.05),60);setTimeout(()=>beep(1568,0.1),120);}
+function sonidoAplausos(){try{const d=3.5,n=18;for(let i=0;i<n;i++){setTimeout(()=>{const b=AC.createBuffer(1,AC.sampleRate*0.08,AC.sampleRate);const da=b.getChannelData(0);for(let j=0;j<da.length;j++)da[j]=(Math.random()*2-1)*(1-j/da.length);const s=AC.createBufferSource();s.buffer=b;const g=AC.createGain();g.gain.value=Math.max(0.1,i<8?0.15+i*0.03:0.38-(i-8)*0.02);s.connect(g);g.connect(AC.destination);s.start();},i*(d*1000/n));}setTimeout(()=>{beep(523,0.15);setTimeout(()=>beep(659,0.15),150);setTimeout(()=>beep(784,0.15),300);setTimeout(()=>beep(1047,0.4),450);},d*1000);}catch(e){}}
+
+// ===== PARTICLES =====
+const canvas=document.getElementById('particles');const ctx=canvas.getContext('2d');canvas.width=window.innerWidth;canvas.height=window.innerHeight;let parts=[];
+function spawnParticles(x,y,color,count=12){for(let i=0;i<count;i++)parts.push({x,y,vx:(Math.random()-0.5)*6,vy:(Math.random()-4)*4,r:Math.random()*6+3,color,life:1});}
+function animParts(){ctx.clearRect(0,0,canvas.width,canvas.height);parts=parts.filter(p=>p.life>0);parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.2;p.life-=0.025;ctx.globalAlpha=p.life;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();});ctx.globalAlpha=1;requestAnimationFrame(animParts);}
+animParts();
+
+// ===== TOAST / XP =====
+function toast(msg,dur=2000){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),dur);}
+function xpPop(val,x,y){const el=document.createElement('div');el.className='xp-pop';el.textContent=`+${val} XP`;el.style.left=x+'px';el.style.top=y+'px';document.body.appendChild(el);setTimeout(()=>el.remove(),1200);}
+function saldoPop(val,x,y){const el=document.createElement('div');el.className='saldo-pop';el.textContent=(val>=0?'+':'')+`S/ ${val}`;el.style.color=val>=0?'var(--verdeclaro)':'var(--rojo)';el.style.left=x+'px';el.style.top=y+'px';document.body.appendChild(el);setTimeout(()=>el.remove(),1200);}
+
+// ===== SALDO CONTEXT =====
+function updateSaldoContext(){
+  const ctx=document.getElementById('saldo-context');
+  if(!ctx)return;
+  if(saldo>0){ctx.textContent='AHORRO';ctx.className='saldo-context ahorro';}
+  else if(saldo<0){ctx.textContent='DEUDA';ctx.className='saldo-context deuda';}
+  else{ctx.textContent='EN CERO';ctx.className='saldo-context';}
+}
+
+// ===== AVATAR =====
+function drawAvatar(id,estado){const el=document.getElementById(id);if(!el)return;const gen=G.genero==='M'?'m':'f',piel=G.piel||'med';const expr=estado==='ok'?'feliz':estado==='warn'?'neutro':'mal';el.src=AVATARS[`av_${gen}_${piel}_${expr}`]||'';}
+function estadoAv(){return saldo>=500?'ok':saldo>=0?'warn':'bad';}
+function dp(){G.nombre=document.getElementById('inp-nom').value||'';drawAvatar('svg-pre',estadoAv());}
+function sg(v,el){G.genero=v;el.closest('.sel-row').querySelectorAll('.sel-btn').forEach(b=>b.classList.remove('on'));el.classList.add('on');drawAvatar('svg-pre','ok');}
+
+// ===== COLEGIO =====
+function onSelectColegio(){
+  const sel=document.getElementById('sel-colegio');
+  G_colegio=sel.value;
+  const info=document.getElementById('colegio-info');
+  const txt=document.getElementById('colegio-info-txt');
+  const btn=document.getElementById('btn-colegio');
+  if(sel.value){
+    txt.textContent='📍 '+sel.value+' — ¡Bienvenido! Tu aventura financiera comienza aquí.';
+    info.classList.add('visible');
+    btn.style.display='block';btn.classList.add('visible');
+  } else { info.classList.remove('visible');btn.style.display='none'; }
+}
+function irInicio(){ir('p-inicio');}
+
+// ===== INICIAR =====
+function iniciar(){
+  if(AC.state==='suspended')AC.resume();
+  G.nombre=document.getElementById('inp-nom').value.trim()||'Jugador';
+  const disEl=document.getElementById('inp-dis');
+  G.distrito=disEl?disEl.value.trim()||'Lima':'Lima';
+  G.grado=document.getElementById('inp-grado').value||'—';
+  G.seccion=document.getElementById('inp-seccion').value||'—';
+  G.carrera=G.grado;
+  xp=0; saldo=0; currentDecision=0; decisions_made=[];
+  ir('p-instrucciones');
+}
+function irJuego(){
+  toast('🎮 ¡Juego iniciado! 15 decisiones te esperan.');
+  siguienteEscenario();
+}
+
+
+// ===== VISUAL NOVEL ENGINE =====
+const VN_SPEAKERS = { 1: 'Compañero de clase', 2: 'Tu jefe de prácticas', 3: 'Lic. Carlos Mendoza' };
+const VN_PHASE_BG = { 1: 'phase-1', 2: 'phase-2', 3: 'phase-3' };
+
+let vnTyping = false;
+let vnDone = false;
+let vnFullText = '';
+let vnTypeInterval = null;
+
+function vnGetCharSrc(phase) {
+  // Phase 1: school boy. Phases 2-3: same image tinted (expand later with real sprites)
+  return window.VN_CHAR_FASE1 || '';
+}
+
+function vnSetPhase(phase, customBg, customSpeaker) {
+  const bg = document.getElementById('vn-bg');
+  bg.className = 'vn-bg ' + (customBg || VN_PHASE_BG[phase]);
+  const char = document.getElementById('vn-char');
+  const src = vnGetCharSrc(phase);
+  char.src = src ? 'data:image/png;base64,' + src : '';
+  char.style.display = src ? 'block' : 'none';
+  // Tint character per phase
+  char.style.filter = phase === 1
+    ? 'drop-shadow(0 8px 32px rgba(0,0,0,0.8))'
+    : phase === 2
+    ? 'drop-shadow(0 8px 32px rgba(50,80,160,0.5)) hue-rotate(200deg) brightness(0.9)'
+    : 'drop-shadow(0 8px 32px rgba(80,50,160,0.5)) hue-rotate(260deg) brightness(0.85)';
+  document.getElementById('vn-speaker').textContent = customSpeaker || VN_SPEAKERS[phase] || 'Narrador';
+}
+
+function vnTypewriter(text, onDone) {
+  const el = document.getElementById('vn-text');
+  el.innerHTML = '';
+  vnTyping = true;
+  vnDone = false;
+  vnFullText = text;
+  let i = 0;
+  if (vnTypeInterval) clearInterval(vnTypeInterval);
+  document.getElementById('vn-tap-hint').style.display = 'none';
+  vnTypeInterval = setInterval(() => {
+    if (i < text.length) {
+      el.innerHTML = text.substring(0, i + 1) + '<span class="vn-cursor"></span>';
+      i++;
+    } else {
+      clearInterval(vnTypeInterval);
+      el.innerHTML = text;
+      vnTyping = false;
+      vnDone = true;
+      document.getElementById('vn-tap-hint').style.display = 'block';
+      if (onDone) onDone();
+    }
+  }, 22);
+}
+
+function vnSkipOrContinue() {
+  if (vnTyping) {
+    clearInterval(vnTypeInterval);
+    document.getElementById('vn-text').innerHTML = vnFullText;
+    vnTyping = false;
+    vnDone = true;
+    document.getElementById('vn-tap-hint').style.display = 'block';
+  } else if (vnDone) {
+    vnShowOptions();
+  }
+}
+
+function vnShowOptions() {
+  document.getElementById('vn-dialog-box').style.display = 'none';
+  document.getElementById('vn-options-panel').style.display = 'block';
+  document.getElementById('vn-stage').onclick = null;
+}
+
+function vnShowReaction(isGood) {
+  const char = document.getElementById('vn-char');
+  const baseFilter = char.style.filter.replace(/ expr-.*/,'');
+  char.classList.remove('expr-happy', 'expr-worried');
+  void char.offsetWidth;
+  char.classList.add(isGood ? 'expr-happy' : 'expr-worried');
+  setTimeout(() => char.classList.remove('expr-happy', 'expr-worried'), 2200);
+}
+
+// ===== MOSTRAR ESCENARIO =====
+function mostrarEscenario(idx){
+  const d=DECISIONS[idx];
+  const phase=PHASES[d.phase];
+  const progress=Math.round((idx/15)*100);
+  document.getElementById('prog-esc').style.width=progress+'%';
+  document.getElementById('esc-nivel').textContent=`${idx+1} / 15`;
+  document.getElementById('esc-colegio').textContent=G_colegio?'📍 '+G_colegio:'Fase '+d.phase+' · '+phase.name;
+  document.getElementById('saldo-esc').textContent=`S/ ${saldo}`;
+  updateSaldoContext();
+  document.getElementById('esc-nom').textContent=G.nombre;
+  const _hudAv=document.getElementById('hud-avatar');
+  const _srcAv=document.getElementById('svg-pre');
+  if(_hudAv&&_srcAv)_hudAv.src=_srcAv.src;
+  const _gradoEl=document.getElementById('esc-grado');
+  if(_gradoEl) _gradoEl.textContent=(G.grado&&G.grado!=='—'?G.grado+(G.seccion&&G.seccion!=='—'?' '+G.seccion:''):'');
+  document.getElementById('esc-edad').textContent=phase.age;
+  document.getElementById('esc-xp').textContent=xp+' XP';
+  document.getElementById('esc-badge').textContent=d.badge;
+  document.getElementById('esc-titulo').textContent=d.title;
+  if(d.dato){
+    document.getElementById('esc-dato').style.display='none';
+    document.getElementById('esc-dato-text').textContent=d.dato;
+  } else { document.getElementById('esc-dato').style.display='none'; }
+  // Build options
+  const container=document.getElementById('opts-container');
+  container.innerHTML='';
+  const shuffled=[...d.options].map((o,i)=>({...o,origIdx:i}));
+  for(let i=shuffled.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];}
+  shuffled.forEach((opt,i)=>{
+    const div=document.createElement('div');
+    div.className='option';
+    div.setAttribute('data-idx',opt.origIdx);
+    div.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;"><div class="option-name" style="margin:0">${String.fromCharCode(65+i)}) ${opt.text}</div><div class="option-check" id="ck-${i}"></div></div><div class="option-detail">${opt.detail}</div>`;
+    div.onclick=function(){elegir(idx,opt.origIdx,this);};
+    container.appendChild(div);
+  });
+  // Launch VN
+  vnSetPhase(d.phase, d.bg, d.speaker);
+  document.getElementById('vn-dialog-box').style.display = 'block';
+  document.getElementById('vn-options-panel').style.display = 'none';
+  ir('p-escenario');
+  // Start typewriter with scenario description
+  const dialogText = d.desc.replace(/<[^>]+>/g,'');
+  vnTypewriter(dialogText);
+  document.getElementById('vn-stage').onclick = vnSkipOrContinue;
+}
+
+// ===== ELEGIR =====
+let choosing=false;
+function elegir(decIdx,optIdx,el){
+  if(choosing)return;
+  choosing=true;
+  const d=DECISIONS[decIdx];
+  const opt=d.options[optIdx];
+  // Visual
+  document.querySelectorAll('#opts-container .option').forEach(o=>{o.style.pointerEvents='none';});
+  el.classList.add('selected');
+  el.querySelector('.option-check').textContent='✓';
+  sonidoOk();
+  vnShowReaction(opt.xp >= 0);
+  const rect=el.getBoundingClientRect();
+  spawnParticles(rect.left+rect.width/2,rect.top+rect.height/2,'#f5c518',8);
+  // Update state
+  xp+=opt.xp;
+  saldo+=opt.money;
+  decisions_made.push({id:d.id, phase:d.phase, title:d.title, optIdx, optText:opt.text, feedback:opt.feedback, xp:opt.xp, money:opt.money});
+  xpPop(opt.xp,window.innerWidth/2,window.innerHeight/2);
+  if(opt.money!==0)saldoPop(opt.money,window.innerWidth/2,window.innerHeight/2+40);
+  sonidoMoneda();
+  setTimeout(()=>{
+    mostrarTransicion(decIdx,optIdx);
+    choosing=false;
+  },900);
+}
+
+// ===== TRANSICIÓN =====
+function mostrarTransicion(decIdx,optIdx){
+  const d=DECISIONS[decIdx];
+  const opt=d.options[optIdx];
+  const progress=Math.round(((decIdx+1)/15)*100);
+  document.getElementById('prog-trans').style.width=progress+'%';
+  document.getElementById('trans-icon').textContent=d.phase===1?'🎓':d.phase===2?'💼':'🚀';
+  document.getElementById('trans-titulo').textContent=opt.text;
+  document.getElementById('trans-feedback').textContent=opt.feedback;
+  if(d.dato){ document.getElementById('trans-dato').style.display='flex'; document.getElementById('trans-dato-text').textContent=d.dato; } else { document.getElementById('trans-dato').style.display='none'; }
+  document.getElementById('trans-saldo').textContent=saldo>=0?`S/ ${saldo}`:`-S/ ${Math.abs(saldo)} (deuda)`;
+  // Check if next is a new phase or end
+  const nextIdx=decIdx+1;
+  if(nextIdx>=15){
+    document.getElementById('trans-btn').textContent='Ver mi resultado final →';
+    document.getElementById('trans-btn').onclick=calcularFinal;
+  } else if(DECISIONS[nextIdx].phase!==d.phase){
+    document.getElementById('trans-btn').textContent='Siguiente fase →';
+    document.getElementById('trans-btn').onclick=function(){mostrarBonusDeFase(nextIdx);};
+  } else {
+    document.getElementById('trans-btn').textContent='Siguiente decisión →';
+    document.getElementById('trans-btn').onclick=siguienteEscenario;
+  }
+  // Teaching card
+  const teachEl = document.getElementById('trans-teaching');
+  const teachTxt = document.getElementById('trans-teaching-text');
+  if(d.teaching){ teachEl.style.display='block'; teachTxt.textContent=d.teaching; }
+  else { teachEl.style.display='none'; }
+  ir('p-trans');
+}
+
+// ===== FASE TRANSICIÓN =====
+function mostrarFase(nextIdx){
+  const nextPhase=PHASES[DECISIONS[nextIdx].phase];
+  const progress=Math.round((nextIdx/15)*100);
+  document.getElementById('prog-fase').style.width=progress+'%';
+  document.getElementById('fase-icon').textContent=nextPhase.emoji;
+  document.getElementById('fase-titulo').textContent='Fase '+DECISIONS[nextIdx].phase+' — '+nextPhase.name;
+  document.getElementById('fase-desc').textContent=nextPhase.age+'\nTu saldo y XP se acumulan de la fase anterior.';
+  document.getElementById('fase-saldo').textContent=saldo>=0?'S/ '+saldo:'-S/ '+Math.abs(saldo)+' (deuda)';
+  // Cinematic
+  const cin = document.getElementById('p-fase-cin');
+  document.getElementById('cin-fase-nombre').textContent = 'FASE ' + DECISIONS[nextIdx].phase;
+  document.getElementById('cin-fase-titulo').textContent = 'Bienvenido a';
+  document.getElementById('cin-fase-sub').textContent = nextPhase.name;
+  cin.style.display='flex';
+  const cinContent = cin.querySelector('.fase-cin-content');
+  cinContent.style.animation='none';
+  cinContent.offsetHeight;
+  cinContent.style.animation='cinFadeIn 3s ease forwards';
+  setTimeout(()=>{ cin.style.display='none'; ir('p-fase'); }, 3000);
+  document.getElementById('fase-xp').textContent=xp+' XP';
+  currentDecision=nextIdx;
+  ir('p-fase');
+}
+
+// ===== SIGUIENTE ESCENARIO =====
+function siguienteEscenario(){
+  if(currentDecision>=15){calcularFinal();return;}
+  mostrarEscenario(currentDecision);
+  currentDecision++;
+}
+
+// ===== FINAL =====
+function calcularFinal(){
+  // Check Phase 3 bonuses first
+  let phase3Bonuses = [];
+  for(const b of BONUSES) {
+    if(b.triggerBefore === 99) {
+      const dm = decisions_made.find(d => d.id === b.requireDecision);
+      if(dm && dm.optIdx === b.requireOption) {
+        phase3Bonuses.push(b);
+      }
+    }
+  }
+  if(phase3Bonuses.length > 0) {
+    pendingFinalBonuses = phase3Bonuses;
+    showNextFinalBonus();
+    return;
+  }
+  mostrarResultadoFinal();
+}
+
+let pendingFinalBonuses = [];
+
+function showNextFinalBonus() {
+  if(pendingFinalBonuses.length === 0) {
+    mostrarResultadoFinal();
+    return;
+  }
+  const b = pendingFinalBonuses.shift();
+  xp += b.xpBonus;
+  saldo += b.moneyBonus;
+  decisions_made.push({id:'bonus', phase:3, title:b.title, optIdx:-1, optText:b.origin, feedback:b.desc, xp:b.xpBonus, money:b.moneyBonus});
+  const progress = 98;
+  document.getElementById('prog-bonus').style.width = progress+'%';
+  document.getElementById('bonus-icon').textContent = b.icon;
+  document.getElementById('bonus-titulo').textContent = b.title;
+  document.getElementById('bonus-origen').textContent = b.origin;
+  document.getElementById('bonus-desc').textContent = b.desc;
+  document.getElementById('bonus-amount').textContent = '+S/ '+b.moneyBonus+' (+'+b.xpBonus+' XP)';
+  document.getElementById('bonus-saldo').textContent = saldo>=0?'S/ '+saldo:'-S/ '+Math.abs(saldo)+' (deuda)';
+  document.getElementById('bonus-btn').textContent = pendingFinalBonuses.length > 0 ? 'Siguiente retorno →' : 'Ver mi resultado final →';
+  document.getElementById('bonus-btn').onclick = showNextFinalBonus;
+  sonidoMoneda();
+  spawnParticles(window.innerWidth/2, window.innerHeight/3, '#4ade80', 15);
+  ir('p-bonus');
+}
+
+function mostrarResultadoFinal(){
+  // Determine profile
+  let xpTier,moneyTier;
+  if(xp>=380)xpTier=0;else if(xp>=300)xpTier=1;else if(xp>=220)xpTier=2;else if(xp>=175)xpTier=3;else xpTier=4;
+  if(saldo>=3000)moneyTier=0;else if(saldo>=1000)moneyTier=1;else if(saldo>=-1000)moneyTier=2;else if(saldo>=-4000)moneyTier=3;else moneyTier=4;
+  const tier=Math.max(xpTier,moneyTier);
+  const profile=PROFILES[tier];
+  document.getElementById('f-emo').textContent=profile.emoji;
+  document.getElementById('f-tit').textContent=profile.title;
+  document.getElementById('f-sub').textContent=xp+' XP · '+(saldo>=0?'S/ '+saldo+' (ahorro)':'S/ '+Math.abs(saldo)+' (deuda)');
+  document.getElementById('f-desc').textContent=profile.desc;
+  document.getElementById('f-xp').textContent=xp;
+  document.getElementById('f-saldo').textContent=saldo>=0?'S/ '+saldo:'-S/ '+Math.abs(saldo);
+  document.getElementById('f-saldo').style.color=saldo>=0?'var(--verdeclaro)':'var(--rojo)';
+  // Build feedback
+  const container=document.getElementById('feedback-container');
+  container.innerHTML='<div class="feedback-titulo">📋 Resumen de tus 15 decisiones</div>';
+  decisions_made.forEach(dm=>{
+    const mod=document.createElement('div');
+    mod.className='feedback-modulo';
+    mod.innerHTML=`<div class="feedback-modulo-header"><span class="feedback-modulo-icon">${dm.phase===1?'🎓':dm.phase===2?'💼':'🚀'}</span><span class="feedback-modulo-label">${dm.title}</span></div><div class="feedback-modulo-decision">${dm.optText} (${dm.xp>=0?'+':''}${dm.xp} XP / ${dm.money>=0?'+':''}S/ ${dm.money})</div><div class="feedback-modulo-leccion">${dm.feedback}</div>`;
+    container.appendChild(mod);
+  });
+  // Mentor
+  document.getElementById('mentor-student-name').textContent=G.nombre;
+  document.getElementById('mentor-student-icon').textContent=profile.emoji;
+  document.getElementById('mentor-student-title').textContent=profile.title;
+  document.getElementById('mentor-greeting').textContent=G.nombre+', escúchame bien:';
+  document.getElementById('mentor-texto').innerHTML=profile.mentor;
+  setTimeout(()=>sonidoAplausos(),400);
+  for(let i=0;i<3;i++)setTimeout(()=>spawnParticles(window.innerWidth/2,window.innerHeight/3,'#f5c518',15),i*200);
+  window._perfilTitulo = profile.title;
+  ir('p-final');
+}
+
+// ===== GOOGLE SHEETS =====
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxjLPBuXniMCakp6BOVZNaIh6VZax21Vt-4nHu3kXs-UQQ5avIkW7bWaSUrI1qctZbXtQ/exec';
+
+function enviarASheets(perfilTitulo) {
+  try {
+    // Construir d1-d15 desde decisions_made (solo decisiones reales, sin bonos)
+    const reales = decisions_made.filter(d => d.id !== 'bonus');
+    const payload = {
+      nombre:   G.nombre,
+      colegio:  G_colegio,
+      grado:    G.grado || '—',
+      seccion:  G.seccion || '—',
+      distrito: G.distrito,
+      xp:       xp,
+      saldo:    saldo,
+      perfil:   perfilTitulo,
+      pretest:  window._pretestScore || 0,
+      posttest: window._posttestScore || 0,
+      timestamp: new Date().toISOString()
+    };
+    // Mapear cada decisión a d1…d15
+    reales.forEach((dm, i) => {
+      payload['d' + (i + 1)] = dm.optText;
+    });
+    // Rellenar con vacío si hay menos de 15
+    for (let i = reales.length + 1; i <= 15; i++) {
+      payload['d' + i] = '';
+    }
+
+    fetch(SHEETS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    console.log('✅ Datos enviados a Finkü Sheets:', payload);
+  } catch(e) {
+    console.warn('⚠️ No se pudo enviar a Sheets:', e);
+  }
+}
+
+
+// ===== SUPABASE =====
+const SUPA_URL = 'https://rcnqdacphxgqzdijyzrh.supabase.co';
+const SUPA_KEY = 'sb_publishable_-t8UnzqICHOlqmt0hWZH4A_28bWvPbo';
+
+const COLEGIO_IDS = {"Jorge Basadre Grohmann": "8631aec6-1365-433b-8437-c0836ec4ac86", "Markham College": "83c89b0c-2347-45b5-8b2e-8301e13e8152"};
+
+async function enviarASupabase(perfilTitulo) {
+  try {
+    const reales = decisions_made.filter(d => d.id !== 'bonus');
+    const colegioId = COLEGIO_IDS[G_colegio] || null;
+
+    const payload = {
+      colegio_id:      colegioId,
+      nombre:          G.nombre,
+      genero:          G.genero,
+      distrito:        G.distrito,
+      grado:           G.grado || null,
+      seccion:         G.seccion || null,
+      pretest_score:   window._pretestScore || 0,
+      posttest_score:  window._posttestScore || 0,
+      xp_final:        xp,
+      saldo_final:     saldo,
+      decisiones:      reales.map(d => ({ id: d.id, opcion: d.optText, xp: d.xp, money: d.money })),
+      completado:      true
+    };
+
+    const res = await fetch(SUPA_URL + '/rest/v1/sesiones', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPA_KEY,
+        'Authorization': 'Bearer ' + SUPA_KEY,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+      console.log('✅ Datos enviados a Supabase');
+    } else {
+      const err = await res.text();
+      console.warn('⚠️ Supabase error:', err);
+    }
+  } catch(e) {
+    console.warn('⚠️ No se pudo enviar a Supabase:', e);
+  }
+}
+
+// ===== POST-TEST =====
+let posttestIdx = 0;
+let posttestScore = 0;
+window._posttestScore = 0;
+
+function iniciarPosttest() {
+  posttestIdx = 0;
+  posttestScore = 0;
+  window._posttestScore = 0;
+  ir('p-posttest');
+  renderPosttest();
+}
+
+function renderPosttest() {
+  if (posttestIdx >= PRETEST.length) { mostrarResultadoPosttest(); return; }
+  const q = PRETEST[posttestIdx];
+  const pct = Math.round((posttestIdx / PRETEST.length) * 100);
+  document.getElementById('posttest-body').innerHTML = `
+    <div class="pretest-scroll">
+      <div class="pretest-progress"><div class="pretest-progress-bar" style="width:${pct}%"></div></div>
+      <div class="pretest-counter">Pregunta ${posttestIdx + 1} de ${PRETEST.length}</div>
+      <div class="pretest-tema">${q.tema}</div>
+      <div class="pretest-pregunta">${q.pregunta}</div>
+      <div class="pretest-opciones" id="pt-opts">
+        ${q.opciones.map((o,i)=>`<button class="pretest-opcion" onclick="responderPosttest(${i})">${o}</button>`).join('')}
+      </div>
+      <div class="pretest-feedback" id="pt-fb"></div>
+      <button class="btn-primary pretest-siguiente" id="pt-sig" onclick="avanzarPosttest()">
+        ${posttestIdx < PRETEST.length-1 ? 'Siguiente →' : 'Ver resultado →'}
+      </button>
+    </div>`;
+}
+
+function responderPosttest(idx) {
+  const q = PRETEST[posttestIdx];
+  const ok = idx === q.correcta;
+  if (ok) posttestScore++;
+  const opts = document.querySelectorAll('#pt-opts .pretest-opcion');
+  opts.forEach((btn, i) => {
+    btn.classList.add(i === q.correcta ? 'correcta' : 'disabled');
+    if (i === idx && !ok) btn.classList.add('incorrecta');
+  });
+  const fb = document.getElementById('pt-fb');
+  fb.className = 'pretest-feedback show ' + (ok ? 'ok' : 'mal');
+  fb.textContent = (ok ? '✅ ' : '❌ ') + q.feedback;
+  const sig = document.getElementById('pt-sig');
+  sig.classList.add('show');
+}
+
+function avanzarPosttest() {
+  posttestIdx++;
+  renderPosttest();
+}
+
+function mostrarResultadoPosttest() {
+  window._posttestScore = posttestScore;
+  const preScore = window._pretestScore || 0;
+  const diff = posttestScore - preScore;
+  const diffText = diff > 0 ? `<span style="color:#4ade80;font-weight:800;">+${diff} respuestas</span> más que antes del juego 🎉`
+                 : diff < 0 ? `<span style="color:#f87171;">${diff} respuestas</span> respecto al pre-test`
+                 : `<span style="color:#f5c518;">Igual que antes</span> — ¡mantén el nivel!`;
+  const pct = Math.round((posttestScore / PRETEST.length) * 100);
+  document.getElementById('posttest-body').innerHTML = `
+    <div class="pretest-resultado">
+      <div class="pretest-score-num">${posttestScore}/10</div>
+      <div class="pretest-score-label">Post-test · ${pct}% correcto</div>
+      <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:16px;margin-bottom:20px;text-align:left;">
+        <div style="font-size:11px;color:#90b890;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Tu evolución</div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+          <span style="font-size:12px;color:#cce0cc;width:60px;">Pre-test</span>
+          <div style="flex:1;background:#1a2e1a;border-radius:6px;height:10px;overflow:hidden;">
+            <div style="width:${Math.round(preScore/10*100)}%;height:100%;background:#6b7280;border-radius:6px;"></div>
+          </div>
+          <span style="font-size:13px;font-weight:800;color:#cce0cc;width:28px;text-align:right;">${preScore}/10</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:12px;color:#f5c518;width:60px;font-weight:800;">Post-test</span>
+          <div style="flex:1;background:#1a2e1a;border-radius:6px;height:10px;overflow:hidden;">
+            <div style="width:${pct}%;height:100%;background:#f5c518;border-radius:6px;transition:width 0.8s ease;"></div>
+          </div>
+          <span style="font-size:13px;font-weight:800;color:#f5c518;width:28px;text-align:right;">${posttestScore}/10</span>
+        </div>
+        <div style="margin-top:12px;font-size:13px;color:#cce0cc;line-height:1.5;">${diffText}</div>
+      </div>
+      <button class="btn-primary visible" onclick="irAlMentor()">Ver consejo del mentor →</button>
+    </div>`;
+  enviarASheets(window._perfilTitulo || '—');
+  enviarASupabase(window._perfilTitulo || '—');
+}
+
+function irAlMentor() {
+  ir('p-mentor');
+}
+
+// ===== REINICIAR =====
+function reiniciar(){
+  xp=0;saldo=0;currentDecision=0;decisions_made=[];
+  posttestIdx=0;posttestScore=0;window._posttestScore=0;window._perfilTitulo='';
+  ['inp-nom','inp-dis','inp-car'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ir('p-inicio');drawAvatar('svg-pre','ok');
+}
+
+// ===== NAVEGACIÓN =====
+function ir(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ===== SPLASH TIMER =====
+setTimeout(()=>{document.getElementById('p-splash').style.display='none';document.querySelector('.phone').style.visibility='visible';ir('p-colegio');},3500);
+
+// ===== PRE-TEST =====
+const PRETEST = [
+  {
+    tema: 'Ahorro',
+    pregunta: 'Tienes S/ 200 de propina este mes. Los gastas todos en salidas. El próximo mes tu celular se malogra. ¿Cuál fue tu error?',
+    opciones: ['Gastar en salidas con amigos','No tener un ahorro previo para imprevistos','Tener un celular caro','No pedir prestado antes'],
+    correcta: 1,
+    feedback: 'El ahorro previo es tu red de seguridad. Sin él, cualquier imprevisto te deja sin opciones.'
+  },
+  {
+    tema: 'Ahorro',
+    pregunta: '¿Cuál es la principal razón para tener un fondo de emergencia?',
+    opciones: ['Para invertir en bolsa cuando haya oportunidad','Para pagar deudas pendientes','Para cubrir gastos imprevistos sin endeudarte','Para hacer viajes en vacaciones'],
+    correcta: 2,
+    feedback: 'Un fondo de emergencia te protege de endeudarte cuando algo inesperado ocurre.'
+  },
+  {
+    tema: 'Deuda y crédito',
+    pregunta: '¿Qué es la tasa de interés de un préstamo?',
+    opciones: ['El monto total que pides prestado','El plazo máximo para pagar','El costo adicional por usar dinero ajeno','La cuota mensual que pagas'],
+    correcta: 2,
+    feedback: 'La tasa de interés es el precio del dinero. Cuanto más alta, más pagas por encima de lo que pediste.'
+  },
+  {
+    tema: 'Deuda y crédito',
+    pregunta: 'Si no pagas tu tarjeta de crédito a tiempo, ¿qué ocurre?',
+    opciones: ['Nada, el banco es flexible los primeros meses','El banco lo descuenta automáticamente de tu sueldo','El banco condona la deuda si explicas tu situación','Te cobran intereses y moras que aumentan tu deuda'],
+    correcta: 3,
+    feedback: 'Las moras e intereses por mora pueden multiplicar tu deuda rápidamente. El tiempo juega en contra.'
+  },
+  {
+    tema: 'Presupuesto',
+    pregunta: 'Anotas cuánto recibes y cuánto gastas cada mes para no quedarte sin plata. ¿Cómo se llama eso?',
+    opciones: ['Estado de cuenta bancario','Balance de inversión','Presupuesto personal','Flujo de caja empresarial'],
+    correcta: 2,
+    feedback: 'El presupuesto personal es la herramienta más básica y poderosa de las finanzas personales.'
+  },
+  {
+    tema: 'Presupuesto',
+    pregunta: 'Ganas S/ 1,000 al mes y gastas S/ 1,200. ¿Cómo se llama esa situación?',
+    opciones: ['Superávit','Equilibrio financiero','Déficit','Inversión negativa'],
+    correcta: 2,
+    feedback: 'Déficit significa que gastas más de lo que ganas. Si se repite, inevitablemente terminas en deuda.'
+  },
+  {
+    tema: 'Inversión básica',
+    pregunta: '¿Cuál es la diferencia principal entre ahorrar e invertir?',
+    opciones: ['Son exactamente lo mismo','Invertir es más seguro que ahorrar','Ahorrar guarda tu dinero; invertir busca que crezca asumiendo algún riesgo','Ahorrar siempre genera más ganancias'],
+    correcta: 2,
+    feedback: 'Ahorrar conserva tu dinero. Invertir lo pone a trabajar para ti, pero con riesgo de por medio.'
+  },
+  {
+    tema: 'Inversión básica',
+    pregunta: '¿Qué significa "a mayor riesgo, mayor rentabilidad potencial"?',
+    opciones: ['Que siempre ganarás más si arriesgas','Que el banco te garantiza ganancias mayores','Que puedes ganar más, pero también puedes perder más','Que el riesgo no existe en productos financieros formales'],
+    correcta: 2,
+    feedback: 'El riesgo y la rentabilidad van de la mano. No existe alta rentabilidad sin asumir mayor posibilidad de pérdida.'
+  },
+  {
+    tema: 'Temas bancarios',
+    pregunta: '¿Qué es Infocorp en Perú?',
+    opciones: ['Un banco estatal de crédito popular','Una app de pagos digitales del gobierno','Un seguro obligatorio para trabajadores','Un registro de historial crediticio y deudas'],
+    correcta: 3,
+    feedback: 'Infocorp registra tu comportamiento como deudor. Aparecer ahí dificulta acceder a créditos en el futuro.'
+  },
+  {
+    tema: 'Temas bancarios',
+    pregunta: '¿Qué es la CTS (Compensación por Tiempo de Servicios)?',
+    opciones: ['Un tipo de tarjeta de crédito especial','Un impuesto que descuentan de tu sueldo','Un beneficio laboral que el empleador deposita como seguro de desempleo','Una cuenta de inversión voluntaria en el banco'],
+    correcta: 2,
+    feedback: 'La CTS es tu fondo de contingencia laboral. Solo puedes usarla en situaciones específicas y es un derecho tuyo como trabajador.'
+  }
+];
+
+let pretestIdx = 0;
+let pretestScore = 0;
+window._pretestScore = 0;
+
+function irPretest() {
+  pretestIdx = 0;
+  pretestScore = 0;
+  window._pretestScore = 0;
+  ir('p-pretest');
+  renderPretestPregunta();
+}
+
+function skipPretest() {
+  window._pretestScore = 0;
+  window._pretestSkipped = true;
+  pretestScore = 0;
+  mostrarResultadoPretest();
+}
+
+function renderPretestPregunta() {
+  const body = document.getElementById('pretest-body');
+  if (pretestIdx >= PRETEST.length) { mostrarResultadoPretest(); return; }
+  const q = PRETEST[pretestIdx];
+  const pct = Math.round((pretestIdx / PRETEST.length) * 100);
+  body.innerHTML = `
+    <div class="pretest-progress"><div class="pretest-progress-bar" style="width:${pct}%"></div></div>
+    <div class="pretest-counter">Pregunta ${pretestIdx + 1} de ${PRETEST.length}</div>
+    <div class="pretest-tema">${q.tema}</div>
+    <div class="pretest-pregunta">${q.pregunta}</div>
+    <div class="pretest-opciones" id="pt-opts">
+      ${q.opciones.map((op,i)=>`<button class="pretest-opcion" onclick="responderPretest(${i})">${String.fromCharCode(65+i)}) ${op}</button>`).join('')}
+    </div>
+    <div class="pretest-feedback" id="pt-feedback"></div>
+    <button class="btn-primary pretest-siguiente" id="pt-next" onclick="siguientePreguntaPretest()" style="display:none;">
+      ${pretestIdx < PRETEST.length-1 ? 'Siguiente pregunta →' : 'Ver mi resultado →'}
+    </button>
+  `;
+}
+
+function responderPretest(idx) {
+  const q = PRETEST[pretestIdx];
+  const opts = document.querySelectorAll('.pretest-opcion');
+  const feedback = document.getElementById('pt-feedback');
+  const next = document.getElementById('pt-next');
+  const ok = idx === q.correcta;
+  if (ok) pretestScore++;
+  opts.forEach((b,i) => {
+    if (i === q.correcta) b.classList.add('correcta');
+    else if (i === idx && !ok) b.classList.add('incorrecta');
+    else b.classList.add('disabled');
+  });
+  feedback.textContent = (ok ? '✅ Correcto. ' : '❌ Incorrecto. ') + q.feedback;
+  feedback.className = 'pretest-feedback show ' + (ok ? 'ok' : 'mal');
+  next.style.display = 'block';
+}
+
+function siguientePreguntaPretest() {
+  pretestIdx++;
+  renderPretestPregunta();
+  window.scrollTo(0,0);
+}
+
+function mostrarResultadoPretest() {
+  window._pretestScore = pretestScore;
+  const pct = Math.round((pretestScore / PRETEST.length) * 100);
+  let msg, emoji;
+  if (pct >= 80) { emoji='🏆'; msg='Base sólida. ¡Ponla a prueba!'; }
+  else if (pct >= 50) { emoji='📈'; msg='Buenos cimientos. El simulador te ayudará a crecer.'; }
+  else { emoji='🎯'; msg='Aquí empieza todo. ¡Finkü es para ti!'; }
+  document.getElementById('pretest-body').innerHTML = `
+    <div style="text-align:center;padding:24px 16px;">
+      <div style="font-size:40px;margin-bottom:6px;">${emoji}</div>
+      <div style="font-family:'Arial Black',sans-serif;font-size:56px;color:#f5c518;font-weight:900;line-height:1;">${pretestScore}/10</div>
+      <div style="font-size:9px;color:#90b890;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Respuestas correctas</div>
+      <div style="font-size:13px;color:#cce0cc;margin-bottom:24px;">${msg}</div>
+      <button onclick="irInicio()" style="width:100%;background:#f5c518;color:#1a3a1a;border:none;border-radius:14px;padding:16px;font-size:15px;font-weight:900;font-family:'Arial Black',sans-serif;cursor:pointer;">¡Empezar el simulador! →</button>
+    </div>
+  `;
+  window.scrollTo(0,0);
+}
+
+drawAvatar('svg-pre','ok');
+</script>
+<script>window.VN_CHAR_FASE1="";</script>
+
+<!-- ======== AUDIO LOFI ======== -->
+
+</body>
+</html>
